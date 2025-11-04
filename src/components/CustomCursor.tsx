@@ -5,6 +5,7 @@ export const CustomCursor = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [isHovering, setIsHovering] = useState(false)
   const [isClicking, setIsClicking] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
     const updateMousePosition = (e: MouseEvent) => {
@@ -31,6 +32,27 @@ export const CustomCursor = () => {
       window.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
+
+  useEffect(() => {
+    const updateVisibility = () => {
+      const shouldShow = !document.body.classList.contains('show-native-cursor')
+      setIsVisible(shouldShow)
+    }
+
+    updateVisibility()
+
+    document.addEventListener('fullscreenchange', updateVisibility)
+    document.addEventListener('lifeos-cursor-visibility-change', updateVisibility)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', updateVisibility)
+      document.removeEventListener('lifeos-cursor-visibility-change', updateVisibility)
+    }
+  }, [])
+
+  if (!isVisible) {
+    return null
+  }
 
   return (
     <>

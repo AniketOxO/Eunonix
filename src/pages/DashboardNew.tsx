@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { GlassCard } from '@/components/GlassCard'
@@ -12,6 +12,7 @@ import { GoalsOverview } from '@/components/GoalsOverview'
 import { DayPlanner } from '@/components/DayPlanner'
 import { ProfileDropdown } from '@/components/ProfileDropdown'
 import { getTimeOfDayGreeting, formatDate, emotionLabels } from '@/utils/emotions'
+import { deriveEnergyLevel } from '@/utils/energy'
 import { MoodMelodyCard } from '@/components/plugins/MoodMelodyCard'
 import { FocusFlowCard } from '@/components/plugins/FocusFlowCard'
 import { BreatheAICard } from '@/components/plugins/BreatheAICard'
@@ -24,12 +25,14 @@ import { PatternPredictorCard } from '@/components/plugins/PatternPredictorCard'
 const Dashboard = () => {
   const navigate = useNavigate()
   const { user, isPluginInstalled } = useAuthStore()
-  const { 
-    mood, 
+  const {
+    mood,
     goals,
+    tasks,
     habits,
+    reflections,
     getTodayPlan,
-    setMood, 
+    setMood,
     updateEmotionHue,
   } = useAppStore()
   
@@ -40,14 +43,8 @@ const Dashboard = () => {
   const installedPlugins = user?.installedPlugins ?? []
 
   useEffect(() => {
-    setMood({
-      emotions: [],
-      dominantEmotion: 'calm',
-      energyLevel: 65,
-      clarity: 72,
-    })
     updateEmotionHue()
-  }, [setMood, updateEmotionHue])
+  }, [updateEmotionHue])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -76,6 +73,28 @@ const Dashboard = () => {
 
   const todayPlan = getTodayPlan()
   const activeHabits = habits.filter(h => h.streak > 0)
+  const energyInsights = useMemo(() => deriveEnergyLevel({
+    mood,
+    tasks,
+    habits,
+    dayPlan: todayPlan ?? undefined,
+    reflections,
+  }), [mood, tasks, habits, todayPlan, reflections])
+
+  useEffect(() => {
+    const energyDelta = Math.abs(energyInsights.level - mood.energyLevel)
+    const clarityDelta = Math.abs(energyInsights.clarity - mood.clarity)
+
+    if (energyDelta < 1 && clarityDelta < 1) {
+      return
+    }
+
+    setMood({
+      ...mood,
+      energyLevel: energyInsights.level,
+      clarity: energyInsights.clarity,
+    })
+  }, [energyInsights.level, energyInsights.clarity, mood, setMood])
   
   // Stats for overview
   const totalGoals = goals.length
@@ -115,7 +134,7 @@ const Dashboard = () => {
       <div className="relative z-10">
         {/* Header */}
         <header className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-ink-200/20 backdrop-blur-sm bg-white/30">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="max-w-[1800px] mx-auto flex justify-between items-center">
             <motion.div
               className="cursor-pointer"
               onClick={() => navigate('/')}
@@ -187,7 +206,7 @@ const Dashboard = () => {
         </header>
 
         {/* Main Dashboard */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+  <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Emotion Status */}
           <motion.div
             className="mb-6 sm:mb-8"
@@ -246,11 +265,16 @@ const Dashboard = () => {
                       <p className="text-ink-500 text-xs sm:text-sm">Your emotional rhythm right now</p>
                     </div>
                     <div className="text-left sm:text-right">
-                      <div className="text-2xl sm:text-3xl font-light text-ink-800">{mood.energyLevel}%</div>
-                      <div className="text-xs sm:text-sm text-ink-500">Energy</div>
+                      <div className="text-2xl sm:text-3xl font-light text-ink-800">{energyInsights.level}%</div>
+                      <div className="text-xs sm:text-sm text-ink-400 flex items-center gap-2 sm:justify-end">
+                        <span>Energy</span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${energyInsights.trend === 'rising' ? 'bg-pink-100 text-pink-600' : energyInsights.trend === 'falling' ? 'bg-rose-100 text-rose-600' : 'bg-ink-100/60 text-ink-500'}`}>
+                          {energyInsights.trend === 'rising' ? '↑ rising' : energyInsights.trend === 'falling' ? '↓ falling' : '→ stable'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <PulseLine intensity={mood.energyLevel} className="h-32 sm:h-48" />
+                  <PulseLine intensity={energyInsights.level} className="h-32 sm:h-48" />
                 </GlassCard>
 
                 {/* Quick Stats */}
@@ -340,15 +364,19 @@ const Dashboard = () => {
                         Manage plugins →
                       </button>
                     </div>
-                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-4 sm:gap-6 [grid-template-columns:repeat(auto-fit,minmax(360px,1fr))] items-stretch">
                       {isPluginInstalled('1') && (
-                        <MoodMelodyCard
-                          onNavigateToSensory={() => navigate('/sensory-expansion')}
-                          highlighted={highlightedPlugin === '1'}
-                        />
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <MoodMelodyCard
+                            onNavigateToSensory={() => navigate('/sensory-expansion')}
+                            highlighted={highlightedPlugin === '1'}
+                          />
+                        </div>
                       )}
                       {isPluginInstalled('2') && (
-                        <FocusFlowCard highlighted={highlightedPlugin === '2'} />
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <FocusFlowCard highlighted={highlightedPlugin === '2'} />
+                        </div>
                       )}
                       {isPluginInstalled('3') && (
                         <div className="md:col-span-2 xl:col-span-3">
@@ -361,7 +389,9 @@ const Dashboard = () => {
                         </div>
                       )}
                       {isPluginInstalled('5') && (
-                        <BreatheAICard highlighted={highlightedPlugin === '5'} />
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <BreatheAICard highlighted={highlightedPlugin === '5'} />
+                        </div>
                       )}
                       {isPluginInstalled('6') && (
                         <div className="md:col-span-2 xl:col-span-3">

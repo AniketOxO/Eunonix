@@ -180,7 +180,7 @@ export const MoodMelodyCard = ({ onNavigateToSensory, highlighted = false }: Moo
 
   return (
     <motion.div
-      className={`bg-white/50 backdrop-blur-md rounded-2xl border border-lilac-200/40 p-6 flex flex-col justify-between min-h-[220px] ${highlighted ? 'ring-2 ring-lilac-400/70 shadow-xl animate-pulse' : ''}`}
+  className={`bg-white/50 backdrop-blur-md rounded-2xl border border-lilac-200/40 p-6 flex flex-col justify-between min-h-[220px] h-full ${highlighted ? 'ring-2 ring-lilac-400/70 shadow-xl animate-pulse' : ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >

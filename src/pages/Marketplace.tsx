@@ -200,12 +200,8 @@ const Marketplace = () => {
       return
     }
 
-    if (['3', '4', '6', '8'].includes(pluginId)) {
-      navigate(`/dashboard?plugin=${pluginId}`)
-      return
-    }
-
-    setActivePluginId(pluginId)
+    // All plugins now navigate directly to dashboard
+    navigate('/dashboard')
   }
 
   const activePlugin = activePluginId ? SAMPLE_PLUGINS.find(p => p.id === activePluginId) : null
