@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --emotion-hue: 210; /* Default: calm blue */
+    --emotion-saturation: 60%;
+    --emotion-lightness: 95%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-sand-50 text-ink-800 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    transition: background-color 1.5s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    cursor: none !important;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+    cursor: none !important;
+  }
+
+  /* Force show cursor on interactive elements */
+  input, textarea, select,
+  button, a, label[for],
+  input:hover, textarea:hover, select:hover,
+  input:focus, textarea:focus, select:focus {
+    cursor: auto !important;
+  }
+  
+  /* Text cursor for text inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="tel"],
+  textarea {
+    cursor: text !important;
+  }
+  
+  /* Pointer cursor for clickable elements */
+  button, 
+  a,
+  label[for],
+  input[type="file"],
+  input[type="submit"],
+  input[type="button"],
+  [role="button"] {
+    cursor: pointer !important;
+  }
+
+  * {
+    @apply border-ink-200/30;
+  }
+
+  /* Better touch targets for mobile */
+  button, a, input, select, textarea {
+    @apply touch-manipulation;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl sm:rounded-3xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+  }
+
+  .glow-effect {
+    filter: drop-shadow(0 0 20px currentColor);
+    opacity: 0.6;
+  }
+
+  .breathing-shadow {
+    animation: breathe-shadow 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe-shadow {
+    0%, 100% {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    }
+    50% {
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #556d8f 0%, #a082c4 100%);
+  }
+
+  .emotion-bg {
+    background: hsl(var(--emotion-hue), var(--emotion-saturation), var(--emotion-lightness));
+    transition: background 2s ease;
+  }
+
+  /* Hide scrollbar on mobile for better UX */
+  @media (max-width: 640px) {
+    .overflow-x-auto::-webkit-scrollbar {
+      display: none;
+    }
+    .overflow-x-auto {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-sand-100/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-ink-300/40 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-ink-400/60;
+}
+
+/* Selection */
+::selection {
+  @apply bg-lilac-200/60 text-ink-900;
+}
+
+/* Improve focus visibility for accessibility */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-lilac-400;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

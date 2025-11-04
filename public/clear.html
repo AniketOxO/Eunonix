@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage</title>
+</head>
+<body>
+    <h1>Clearing localStorage...</h1>
+    <script>
+        localStorage.removeItem('lifeos-channels');
+        localStorage.removeItem('lifeos-reflections');
+        localStorage.removeItem('lifeos-quests');
+        localStorage.removeItem('lifeos-progress');
+        localStorage.removeItem('lifeos-community-version');
+        alert('Storage cleared! Click OK to go back.');
+        window.location.href = '/community';
+    </script>
+</body>
+</html>
