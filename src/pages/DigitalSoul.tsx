@@ -154,16 +154,24 @@ const DigitalSoul = () => {
         goals,
         habits,
         journal: journalEntries,
-        plans: [],
+        plans: Object.values(useAppStore.getState().dayPlans),
         mood
       },
-      soulProfile: soulProfile!,
+      soulProfile: soulProfile || {
+        coreValues: [],
+        dominantEmotions: [],
+        thinkingPatterns: [],
+        growthAreas: [],
+        strengths: [],
+        lifePhilosophy: '',
+        lastUpdated: new Date()
+      },
       stats: {
         totalGoals: goals.length,
         totalHabits: habits.length,
         totalJournalEntries: journalEntries.length,
-        totalDays: Math.max(0, ...habits.map(h => h.streak)),
-        longestStreak: Math.max(0, ...habits.map(h => h.longestStreak))
+        totalDays: habits.length > 0 ? Math.max(0, ...habits.map(h => h.streak)) : 0,
+        longestStreak: habits.length > 0 ? Math.max(0, ...habits.map(h => h.longestStreak)) : 0
       }
     }
 
@@ -588,7 +596,7 @@ const DigitalSoul = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button onClick={handleExportData}>
                   <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -596,13 +604,13 @@ const DigitalSoul = () => {
                   Export Backup
                 </Button>
 
-                <label>
-                  <Button variant="outline" as="span">
+                <label className="inline-block cursor-pointer">
+                  <span className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base rounded-full font-medium transition-all duration-300 min-h-[44px] bg-transparent border-2 border-ink-700 text-ink-700 hover:bg-ink-700 hover:text-white">
                     <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
                     Import Backup
-                  </Button>
+                  </span>
                   <input
                     type="file"
                     accept=".json"
