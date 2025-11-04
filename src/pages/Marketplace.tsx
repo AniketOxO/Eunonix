@@ -4,6 +4,14 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/Button'
 import { PluginCategory } from '@/types/subscription'
 import { useAuthStore } from '@/store/useAuthStore'
+import { MoodMelodyCard } from '@/components/plugins/MoodMelodyCard'
+import { FocusFlowCard } from '@/components/plugins/FocusFlowCard'
+import { BreatheAICard } from '@/components/plugins/BreatheAICard'
+import { ToneTunerCard } from '@/components/plugins/ToneTunerCard'
+import { EmotionChartsCard } from '@/components/plugins/EmotionChartsCard'
+import { AuroraThemePackCard } from '@/components/plugins/AuroraThemePackCard'
+import { NotionSyncCard } from '@/components/plugins/NotionSyncCard'
+import { PatternPredictorCard } from '@/components/plugins/PatternPredictorCard'
 
 interface MarketplacePlugin {
   id: string
@@ -17,6 +25,7 @@ interface MarketplacePlugin {
   icon: JSX.Element
   verified: boolean
   featured?: boolean
+  launchPath?: string
 }
 
 const SAMPLE_PLUGINS: MarketplacePlugin[] = [
@@ -31,6 +40,7 @@ const SAMPLE_PLUGINS: MarketplacePlugin[] = [
     downloads: 12500,
     verified: true,
     featured: true,
+    launchPath: '/dashboard?plugin=1',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
@@ -48,6 +58,7 @@ const SAMPLE_PLUGINS: MarketplacePlugin[] = [
     downloads: 8900,
     verified: true,
     featured: true,
+    launchPath: '/dashboard?plugin=2',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -97,6 +108,7 @@ const SAMPLE_PLUGINS: MarketplacePlugin[] = [
     downloads: 15300,
     verified: true,
     featured: true,
+    launchPath: '/dashboard?plugin=5',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -160,6 +172,7 @@ const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [activePluginId, setActivePluginId] = useState<string | null>(null)
 
   const handlePluginAction = (pluginId: string) => {
     if (!isAuthenticated) {
@@ -180,6 +193,25 @@ const Marketplace = () => {
     
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3000)
+  }
+
+  const handleLaunchPlugin = (pluginId: string) => {
+    if (!isPluginInstalled(pluginId)) {
+      return
+    }
+
+    if (['3', '4', '6', '8'].includes(pluginId)) {
+      navigate(`/dashboard?plugin=${pluginId}`)
+      return
+    }
+
+    setActivePluginId(pluginId)
+  }
+
+  const activePlugin = activePluginId ? SAMPLE_PLUGINS.find(p => p.id === activePluginId) : null
+
+  const closePluginModal = () => {
+    setActivePluginId(null)
   }
 
   const categories: Array<{ id: PluginCategory | 'all'; label: string }> = [
@@ -409,22 +441,33 @@ const Marketplace = () => {
                     <span className="text-lg font-medium text-ink-800">
                       {plugin.price === 0 ? 'Free' : `$${plugin.price}`}
                     </span>
-                    <Button 
-                      size="sm"
-                      onClick={() => handlePluginAction(plugin.id)}
-                      variant={isPluginInstalled(plugin.id) ? 'ghost' : 'primary'}
-                    >
-                      {isPluginInstalled(plugin.id) ? (
-                        <>
-                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          Installed
-                        </>
-                      ) : (
-                        'Install'
+                    <div className="flex items-center gap-2">
+                      {isPluginInstalled(plugin.id) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleLaunchPlugin(plugin.id)}
+                        >
+                          Open
+                        </Button>
                       )}
-                    </Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => handlePluginAction(plugin.id)}
+                        variant={isPluginInstalled(plugin.id) ? 'ghost' : 'primary'}
+                      >
+                        {isPluginInstalled(plugin.id) ? (
+                          <>
+                            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Installed
+                          </>
+                        ) : (
+                          'Install'
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -512,22 +555,33 @@ const Marketplace = () => {
                   <span className="text-sm font-medium text-ink-800">
                     {plugin.price === 0 ? 'Free' : `$${plugin.price}`}
                   </span>
-                  <Button 
-                    size="sm" 
-                    variant={isPluginInstalled(plugin.id) ? 'ghost' : 'primary'}
-                    onClick={() => handlePluginAction(plugin.id)}
-                  >
-                    {isPluginInstalled(plugin.id) ? (
-                      <>
-                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Installed
-                      </>
-                    ) : (
-                      'Install'
+                  <div className="flex items-center gap-2">
+                    {isPluginInstalled(plugin.id) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleLaunchPlugin(plugin.id)}
+                      >
+                        Open
+                      </Button>
                     )}
-                  </Button>
+                    <Button 
+                      size="sm" 
+                      variant={isPluginInstalled(plugin.id) ? 'ghost' : 'primary'}
+                      onClick={() => handlePluginAction(plugin.id)}
+                    >
+                      {isPluginInstalled(plugin.id) ? (
+                        <>
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Installed
+                        </>
+                      ) : (
+                        'Install'
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -578,6 +632,79 @@ const Marketplace = () => {
                 <p className="font-medium">{toastMessage}</p>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Plugin Modal */}
+      <AnimatePresence>
+        {activePlugin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 210, damping: 24 }}
+              className="w-full max-w-3xl bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-ink-200/30 bg-white/60">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-ink-900">{activePlugin.name}</h3>
+                    {activePlugin.verified && (
+                      <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <p className="text-sm text-ink-500">{activePlugin.developer}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+                    Open Dashboard
+                  </Button>
+                  <button
+                    onClick={closePluginModal}
+                    className="w-9 h-9 rounded-full bg-ink-100 hover:bg-ink-200 flex items-center justify-center"
+                    aria-label="Close plugin"
+                  >
+                    <svg className="w-5 h-5 text-ink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-white/70 via-white/40 to-lilac-100/40">
+                {activePlugin.id === '1' && (
+                  <MoodMelodyCard
+                    onNavigateToSensory={() => {
+                      closePluginModal()
+                      navigate('/sensory-expansion')
+                    }}
+                  />
+                )}
+                {activePlugin.id === '2' && <FocusFlowCard />}
+                {activePlugin.id === '3' && <ToneTunerCard />}
+                {activePlugin.id === '4' && <EmotionChartsCard />}
+                {activePlugin.id === '5' && <BreatheAICard />}
+                {activePlugin.id === '6' && <NotionSyncCard />}
+                {activePlugin.id === '7' && (
+                  <AuroraThemePackCard
+                    onThemeActivated={(themeId) => {
+                      closePluginModal()
+                      navigate(`/dashboard?plugin=7&theme=${themeId}`)
+                    }}
+                  />
+                )}
+                {activePlugin.id === '8' && <PatternPredictorCard />}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

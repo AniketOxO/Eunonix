@@ -114,6 +114,22 @@ export interface WeekPlan {
   review?: string
 }
 
+export interface ThemePalette {
+  id: string
+  name: string
+  description: string
+  background: string
+  card: string
+  accent: string
+  glow: string
+  text: string
+  neutral: string
+}
+
+export interface ThemeState {
+  activeThemeId: string
+}
+
 export interface UserState {
   mood: MoodData
   tasks: Task[]
@@ -126,5 +142,6 @@ export interface UserState {
   dayPlans: { [date: string]: DayPlan }
   weekPlans: { [weekId: string]: WeekPlan }
   
-  lastSync: Date
+  lastSync: Date | null
+  activeThemeId: string
 }

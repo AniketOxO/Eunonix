@@ -14,6 +14,7 @@ import {
   Priority
 } from '@/types'
 import { safeStorage } from '@/utils/storage'
+import { applyThemeToDocument } from '@/config/themes'
 
 interface AppStore extends UserState {
   setMood: (mood: MoodData) => void
@@ -57,6 +58,13 @@ interface AppStore extends UserState {
   getTodayPlan: () => DayPlan | undefined
   getActiveHabits: () => Habit[]
   getGoalProgress: (goalId: string) => number
+
+  // Theme
+  activeThemeId: string
+  setActiveTheme: (themeId: string) => void
+
+  // Sync
+  setLastSync: (date: Date | null) => void
 }
 
 const emotionToHue: Record<EmotionType, number> = {
@@ -84,7 +92,7 @@ export const useAppStore = create<AppStore>()(
       habits: [],
       dayPlans: {},
       weekPlans: {},
-      lastSync: new Date(),
+  lastSync: null,
 
       setMood: (mood) => {
         set({ mood })
@@ -323,6 +331,14 @@ export const useAppStore = create<AppStore>()(
         
         return Math.round(totalProgress / relatedSystems.length)
       },
+
+      activeThemeId: 'default',
+      setActiveTheme: (themeId) => {
+        applyThemeToDocument(themeId)
+        set({ activeThemeId: themeId })
+      },
+
+  setLastSync: (date: Date | null) => set({ lastSync: date }),
     }),
     {
       name: 'lifeos-storage',
@@ -338,9 +354,11 @@ export const useAppStore = create<AppStore>()(
           if (typeof requestAnimationFrame === 'function') {
             requestAnimationFrame(() => {
               state.updateEmotionHue()
+              applyThemeToDocument(state.activeThemeId ?? 'default')
             })
           } else {
             state.updateEmotionHue()
+            applyThemeToDocument(state.activeThemeId ?? 'default')
           }
         } catch (error) {
           console.warn('[LifeOS] Failed to rehydrate emotion hue.', error)

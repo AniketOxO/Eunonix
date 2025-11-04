@@ -1,14 +1,133 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useAppStore } from '@/store/useAppStore'
 import { Button } from '@/components/Button'
 
 const DeveloperPortal = () => {
   const navigate = useNavigate()
   const { user, developerProfile, isAuthenticated, createDeveloperProfile, generateAPIKey, revokeAPIKey } = useAuthStore()
+  const { mood, goals, habits } = useAppStore()
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [showNewKey, setShowNewKey] = useState<string | null>(null)
+  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null)
+  const documentationRef = useRef<HTMLDivElement | null>(null)
+  const codeRef = useRef<HTMLDivElement | null>(null)
+  const playgroundRef = useRef<HTMLDivElement | null>(null)
+
+  const [activeDocSection, setActiveDocSection] = useState<'overview' | 'auth' | 'webhooks' | 'plugins'>('overview')
+  const [activeCodeLanguage, setActiveCodeLanguage] = useState<'typescript' | 'python' | 'curl'>('typescript')
+  const [playgroundEndpoint, setPlaygroundEndpoint] = useState<'currentEmotion' | 'habitMomentum' | 'goalProgress'>('currentEmotion')
+  const [playgroundStatus, setPlaygroundStatus] = useState<'idle' | 'loading' | 'success'>('idle')
+  const [playgroundResponse, setPlaygroundResponse] = useState<Record<string, unknown> | null>(null)
+
+  const docSections = useMemo(() => ({
+    overview: {
+      title: 'API Overview',
+      description: 'LifeOS Emotional API lets you surface real-time affective telemetry, behaviour streaks, and goal velocity for custom integrations.',
+      bullets: [
+        'Latency-optimised streaming channel for mood and energy updates.',
+        'REST endpoints expose consolidated emotional state snapshots.',
+        'SDKs for TypeScript, Python, and serverless runtimes.'
+      ]
+    },
+    auth: {
+      title: 'Authentication & Security',
+      description: 'Secure each request with a static API key or short-lived session token issued via OAuth. Rotate keys at any time within this portal.',
+      bullets: [
+        'Send the key through the `Authorization: Bearer <key>` header.',
+        'Keys inherit the same quota as your subscription tier.',
+        'Rotate frequently and revoke compromised keys instantly.'
+      ]
+    },
+    webhooks: {
+      title: 'Webhooks & Streaming',
+      description: 'Subscribe to push notifications instead of polling by registering a webhook endpoint.',
+      bullets: [
+        'Receive mood and energy deltas in under 3 seconds.',
+        'Replay missed events by providing the `since` cursor.',
+        'Verify signatures with the shared secret stored alongside your key.'
+      ]
+    },
+    plugins: {
+      title: 'Publishing Plugins',
+      description: 'Ship your own marketplace plugin by packaging a manifest and onboarding checklist.',
+      bullets: [
+        'Submit plugin metadata from the Marketplace Publisher form.',
+        'Attach telemetry scopes to request the data you require.',
+        'Automated review takes <48h and surfaces required fixes.'
+      ]
+    }
+  }), [])
+
+  const codeExamples = useMemo(() => ({
+    typescript: `import { LifeOSEmotionalAPI } from '@lifeos/emotional-api'
+
+const client = new LifeOSEmotionalAPI({
+  apiKey: process.env.LIFEOS_KEY!,
+  webhookUrl: 'https://your-app.com/webhook'
+})
+
+const emotion = await client.getCurrentEmotion()
+console.log('Dominant emotion:', emotion.emotion)
+console.log('Energy level:', emotion.energyLevel)
+`,
+    python: `from lifeos import LifeOSEmotionalAPI
+
+client = LifeOSEmotionalAPI(
+    api_key=os.environ['LIFEOS_KEY'],
+    webhook_url='https://your-app.com/webhook'
+)
+
+emotion = client.current_emotion()
+print('Dominant emotion:', emotion['emotion'])
+print('Energy level:', emotion['energyLevel'])
+`,
+    curl: `curl https://api.lifeos.app/v1/emotion/current \\
+  -H "Authorization: Bearer $LIFEOS_KEY" \\
+  -H "Content-Type: application/json"`
+  }), [])
+
+  const playbookResponseForEndpoint = (endpoint: typeof playgroundEndpoint) => {
+    if (endpoint === 'currentEmotion') {
+      return {
+        emotion: mood.dominantEmotion,
+        energyLevel: mood.energyLevel,
+        clarity: mood.clarity,
+        timestamp: new Date().toISOString()
+      }
+    }
+
+    if (endpoint === 'habitMomentum') {
+      const totalHabits = habits.length
+      const activeStreaks = habits.filter((habit) => habit.streak > 0)
+      const avgStreak = activeStreaks.length > 0
+        ? Math.round(activeStreaks.reduce((sum, habit) => sum + habit.streak, 0) / activeStreaks.length)
+        : 0
+      return {
+        totalHabits,
+        activeStreaks: activeStreaks.length,
+        averageStreakDays: avgStreak,
+        longestStreak: habits.reduce((max, habit) => Math.max(max, habit.longestStreak), 0)
+      }
+    }
+
+    const goalCount = goals.length
+    const inProgress = goals.filter((goal) => goal.progress < 100)
+    const completed = goals.filter((goal) => goal.progress >= 100)
+    const averageProgress = goalCount > 0
+      ? Math.round(goals.reduce((sum, goal) => sum + goal.progress, 0) / goalCount)
+      : 0
+
+    return {
+      totalGoals: goalCount,
+      activeGoals: inProgress.length,
+      completedGoals: completed.length,
+      averageProgress,
+      lastUpdated: new Date().toISOString()
+    }
+  }
 
   if (!isAuthenticated) {
     return (
@@ -31,16 +150,60 @@ const DeveloperPortal = () => {
     setShowNewKey(newKey)
   }
 
+  const fallbackClipboardCopy = (value: string) => {
+    if (typeof document === 'undefined') return false
+    const temp = document.createElement('textarea')
+    temp.value = value
+    temp.style.position = 'fixed'
+    temp.style.opacity = '0'
+    document.body.appendChild(temp)
+    temp.focus()
+    temp.select()
+    const success = document.execCommand('copy')
+    document.body.removeChild(temp)
+    return success
+  }
+
+  const copyToClipboard = async (value: string, setFlag: (value: string | null) => void, identifier: string) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value)
+      } else {
+        const success = fallbackClipboardCopy(value)
+        if (!success) throw new Error('Clipboard copy unsupported')
+      }
+      setFlag(identifier)
+      window.setTimeout(() => setFlag(null), 2000)
+    } catch (error) {
+      console.warn('[DeveloperPortal] clipboard copy failed', error)
+    }
+  }
+
   const handleCopyKey = (key: string) => {
-    navigator.clipboard.writeText(key)
-    setCopiedKey(key)
-    setTimeout(() => setCopiedKey(null), 2000)
+    copyToClipboard(key, setCopiedKey, key)
   }
 
   const handleRevokeKey = (key: string) => {
     if (confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
       revokeAPIKey(key)
     }
+  }
+
+  const handleCopySnippet = (language: string) => {
+    const snippet = codeExamples[language as keyof typeof codeExamples]
+    if (!snippet) return
+    copyToClipboard(snippet, setCopiedSnippet, language)
+  }
+
+  const runPlayground = () => {
+    setPlaygroundStatus('loading')
+    setPlaygroundResponse(null)
+
+    window.setTimeout(() => {
+      const response = playbookResponseForEndpoint(playgroundEndpoint)
+      setPlaygroundResponse(response)
+      setPlaygroundStatus('success')
+    }, 700)
   }
 
   return (
@@ -61,6 +224,18 @@ const DeveloperPortal = () => {
               <Button variant="ghost" onClick={() => navigate('/dashboard')}>
                 Dashboard
               </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => documentationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  >
+                    Full Documentation
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => codeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  >
+                    Code Examples
+                  </Button>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-lilac-400 to-pink-400 flex items-center justify-center text-white font-medium">
                   {user?.name.charAt(0).toUpperCase()}
@@ -280,6 +455,7 @@ const DeveloperPortal = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
+              ref={documentationRef}
             >
               <h2 className="text-2xl font-semibold text-ink-900 mb-6">Quick Start</h2>
               
@@ -317,19 +493,91 @@ client.subscribe((data) => {
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <Button variant="outline" onClick={() => window.open('https://docs.lifeos.app', '_blank')}>
-                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                    Full Documentation
-                  </Button>
-                  <Button variant="outline" onClick={() => window.open('https://github.com/lifeos/examples', '_blank')}>
-                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                    Code Examples
-                  </Button>
+                <div>
+                  <h3 className="text-lg font-medium text-ink-800 mb-4">4. Explore the Platform</h3>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {(['overview', 'auth', 'webhooks', 'plugins'] as const).map((section) => (
+                      <button
+                        key={section}
+                        onClick={() => setActiveDocSection(section)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          activeDocSection === section
+                            ? 'bg-gradient-to-r from-ink-600 to-lilac-500 text-white shadow'
+                            : 'bg-white/70 text-ink-600 hover:bg-white'
+                        }`}
+                      >
+                        {docSections[section].title}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="rounded-2xl border border-ink-200/40 bg-white/80 p-6">
+                    <h4 className="text-xl font-semibold text-ink-800 mb-2">{docSections[activeDocSection].title}</h4>
+                    <p className="text-sm text-ink-600 mb-4">{docSections[activeDocSection].description}</p>
+                    <ul className="space-y-2 text-sm text-ink-600 list-disc list-inside">
+                      {docSections[activeDocSection].bullets.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]" ref={codeRef}>
+                  <div className="rounded-2xl border border-ink-200/40 bg-white/80 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold text-ink-800">Language Samples</h4>
+                      <div className="flex gap-2">
+                        {(['typescript', 'python', 'curl'] as const).map((lang) => (
+                          <button
+                            key={lang}
+                            onClick={() => setActiveCodeLanguage(lang)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              activeCodeLanguage === lang
+                                ? 'bg-ink-900 text-white'
+                                : 'bg-white/70 text-ink-600 hover:bg-white'
+                            }`}
+                          >
+                            {lang.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="relative bg-ink-900 text-green-400 rounded-xl p-4 font-mono text-sm overflow-x-auto">
+                      <pre>{codeExamples[activeCodeLanguage]}</pre>
+                      <button
+                        onClick={() => handleCopySnippet(activeCodeLanguage)}
+                        className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs bg-white/10 text-white hover:bg-white/20"
+                      >
+                        {copiedSnippet === activeCodeLanguage ? 'Copied' : 'Copy' }
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    className="rounded-2xl border border-ink-200/40 bg-white/80 p-6"
+                    ref={playgroundRef}
+                  >
+                    <h4 className="text-lg font-semibold text-ink-800 mb-4">API Playground</h4>
+                    <p className="text-sm text-ink-600 mb-4">Run simulated requests against your current workspace data to understand response shapes.</p>
+                    <label className="block text-xs font-semibold uppercase tracking-widest text-ink-400 mb-2">Endpoint</label>
+                    <select
+                      value={playgroundEndpoint}
+                      onChange={(event) => setPlaygroundEndpoint(event.target.value as typeof playgroundEndpoint)}
+                      className="w-full mb-4 rounded-xl border border-ink-200/40 bg-white/70 px-4 py-3 text-sm text-ink-700 focus:outline-none focus:ring-2 focus:ring-lilac-400"
+                    >
+                      <option value="currentEmotion">GET /v1/emotion/current</option>
+                      <option value="habitMomentum">GET /v1/habits/momentum</option>
+                      <option value="goalProgress">GET /v1/goals/summary</option>
+                    </select>
+                    <Button onClick={runPlayground} disabled={playgroundStatus === 'loading'} className="w-full mb-4">
+                      {playgroundStatus === 'loading' ? 'Requesting…' : 'Run Request'}
+                    </Button>
+                    <div className="bg-ink-900 text-green-400 rounded-xl p-4 font-mono text-xs min-h-[160px]">
+                      {playgroundStatus === 'idle' && <span>// Response will appear here</span>}
+                      {playgroundStatus === 'loading' && <span>// Gathering telemetry…</span>}
+                      {playgroundStatus === 'success' && (
+                        <pre>{JSON.stringify(playgroundResponse, null, 2)}</pre>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>

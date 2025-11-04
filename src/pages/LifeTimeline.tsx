@@ -66,9 +66,9 @@ export default function LifeTimeline() {
   }, [timelineEntries])
 
   const loadTimelineData = () => {
-  // Load from persisted storage (journal, goals, habits, etc.)
-  const journalData = readJSON<unknown>('lifeos-journal', [])
-    
+    // Load persisted timeline inputs (journal, goals, habits, etc.)
+    const journalData = readJSON<unknown>('lifeos-journal', [])
+
     const entries: TimelineEntry[] = []
 
     // Parse journal entries
@@ -100,123 +100,9 @@ export default function LifeTimeline() {
       })
     }
 
-    // Generate sample data if empty
-    if (entries.length === 0) {
-      entries.push(...generateSampleTimeline())
-    }
-
     // Sort by date
     entries.sort((a, b) => a.date.getTime() - b.date.getTime())
     setTimelineEntries(entries)
-  }
-
-  const generateSampleTimeline = (): TimelineEntry[] => {
-    const now = new Date()
-    const samples: TimelineEntry[] = []
-
-    // Phase 1: Awakening (March-June)
-    samples.push({
-      id: 'sample-1',
-      date: new Date(2024, 2, 15), // March 15
-      type: 'journal',
-      title: 'First Step Toward Change',
-      content: 'Today I decided things need to change. I can feel it in my bones - this isn\'t the life I want to be living. Time to wake up.',
-      emotion: 'struggle',
-      tags: ['awakening', 'decision'],
-      intensity: 7
-    })
-
-    samples.push({
-      id: 'sample-2',
-      date: new Date(2024, 3, 3), // April 3
-      type: 'milestone',
-      title: 'Started Morning Meditation',
-      content: 'Committed to 10 minutes of meditation every morning. It\'s hard but I can feel something shifting.',
-      emotion: 'calm',
-      tags: ['meditation', 'routine'],
-      intensity: 6
-    })
-
-    samples.push({
-      id: 'sample-3',
-      date: new Date(2024, 4, 20), // May 20
-      type: 'reflection',
-      title: 'Understanding My Patterns',
-      content: 'I\'m starting to see the patterns - how I sabotage myself, how I run from discomfort. Awareness is the first step.',
-      emotion: 'growth',
-      tags: ['self-awareness', 'patterns'],
-      intensity: 8
-    })
-
-    samples.push({
-      id: 'sample-4',
-      date: new Date(2024, 5, 12), // June 12
-      type: 'journal',
-      title: 'Breaking Point',
-      content: 'Had a breakdown today. All the old patterns came rushing back. But this time, I didn\'t give up. I sat with the pain.',
-      emotion: 'struggle',
-      tags: ['breakthrough', 'resilience'],
-      intensity: 9
-    })
-
-    // Phase 2: Expansion (July-October)
-    samples.push({
-      id: 'sample-5',
-      date: new Date(2024, 6, 8), // July 8
-      type: 'milestone',
-      title: 'First Month of Consistency',
-      content: '30 days straight of morning routine. I\'m not the same person I was 3 months ago.',
-      emotion: 'joy',
-      tags: ['consistency', 'achievement'],
-      intensity: 9
-    })
-
-    samples.push({
-      id: 'sample-6',
-      date: new Date(2024, 7, 15), // August 15
-      type: 'journal',
-      title: 'New Connections',
-      content: 'Met people who get it. Who are on the same path. I don\'t feel alone anymore.',
-      emotion: 'joy',
-      tags: ['community', 'connection'],
-      intensity: 8
-    })
-
-    samples.push({
-      id: 'sample-7',
-      date: new Date(2024, 8, 22), // September 22
-      type: 'goal',
-      title: 'Career Pivot Decision',
-      content: 'Decided to pursue what I actually love. It\'s scary but staying here is scarier.',
-      emotion: 'breakthrough',
-      tags: ['career', 'courage'],
-      intensity: 10
-    })
-
-    samples.push({
-      id: 'sample-8',
-      date: new Date(2024, 9, 10), // October 10
-      type: 'reflection',
-      title: 'Looking Back at Who I Was',
-      content: 'Six months ago I couldn\'t imagine being here. The journey is real. The transformation is real.',
-      emotion: 'peace',
-      tags: ['gratitude', 'transformation'],
-      intensity: 9
-    })
-
-    // Recent entries
-    samples.push({
-      id: 'sample-9',
-      date: new Date(2024, 10, 1), // November 1
-      type: 'journal',
-      title: 'Continuing the Journey',
-      content: 'Every day is a choice. Today I choose growth. Today I choose myself.',
-      emotion: 'calm',
-      tags: ['commitment', 'choice'],
-      intensity: 7
-    })
-
-    return samples
   }
 
   const mapEmotionToCategory = (emotion: string): TimelineEntry['emotion'] => {
@@ -454,6 +340,14 @@ export default function LifeTimeline() {
 
   // Export
   const handleExport = () => {
+    const firstEntryDate = timelineEntries[0]?.date
+    const totalDays = firstEntryDate
+      ? Math.max(0, Math.floor((new Date().getTime() - firstEntryDate.getTime()) / (1000 * 60 * 60 * 24)))
+      : 0
+    const dominantEmotion = timelineEntries.length > 0
+      ? getMostFrequent(timelineEntries.map(e => e.emotion))
+      : 'N/A'
+
     const autobiography = {
       title: 'My Life Story',
       subtitle: 'A Digital Autobiography',
@@ -481,9 +375,9 @@ export default function LifeTimeline() {
         }))
       })),
       statistics: {
-        totalDays: Math.floor((new Date().getTime() - timelineEntries[0]?.date.getTime()) / (1000 * 60 * 60 * 24)),
+        totalDays,
         totalPhases: lifeArcs.length,
-        dominantEmotion: getMostFrequent(timelineEntries.map(e => e.emotion)),
+        dominantEmotion,
         topTags: getMostFrequentN(timelineEntries.flatMap(e => e.tags), 5)
       }
     }
@@ -685,7 +579,11 @@ export default function LifeTimeline() {
 
               {filteredEntries.length === 0 && (
                 <div className="text-center py-20">
-                  <p className="text-ink-500">No entries found for this filter.</p>
+                  <p className="text-ink-500">
+                    {timelineEntries.length === 0
+                      ? 'Your timeline is waiting for its first entry. Start journaling or tracking milestones to see them appear here.'
+                      : 'No entries match the current filters.'}
+                  </p>
                 </div>
               )}
             </motion.div>

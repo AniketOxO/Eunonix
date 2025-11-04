@@ -7,6 +7,13 @@
     --emotion-hue: 210; /* Default: calm blue */
     --emotion-saturation: 60%;
     --emotion-lightness: 95%;
+    --lifeos-background: linear-gradient(160deg, #f8f5ff 0%, #ffffff 50%, #f3f6ff 100%);
+    --lifeos-card: rgba(255, 255, 255, 0.6);
+    --lifeos-accent: #5b4bb7;
+    --lifeos-accent-gradient: linear-gradient(135deg, #556d8f 0%, #a082c4 100%);
+    --lifeos-text: #1f2845;
+    --lifeos-neutral: #e3e8f7;
+    --lifeos-glow: rgba(90, 75, 183, 0.25);
   }
 
   html {
@@ -20,6 +27,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     cursor: none !important;
+    background: var(--lifeos-background);
+    color: var(--lifeos-text);
   }
 
   * {
@@ -69,7 +78,9 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl sm:rounded-3xl;
+    @apply backdrop-blur-md rounded-2xl sm:rounded-3xl;
+    background: var(--lifeos-card);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
   }
 
@@ -93,7 +104,7 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #556d8f 0%, #a082c4 100%);
+    background-image: var(--lifeos-accent-gradient);
   }
 
   .emotion-bg {

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { GlassCard } from '@/components/GlassCard'
@@ -12,10 +12,18 @@ import { GoalsOverview } from '@/components/GoalsOverview'
 import { DayPlanner } from '@/components/DayPlanner'
 import { ProfileDropdown } from '@/components/ProfileDropdown'
 import { getTimeOfDayGreeting, formatDate, emotionLabels } from '@/utils/emotions'
+import { MoodMelodyCard } from '@/components/plugins/MoodMelodyCard'
+import { FocusFlowCard } from '@/components/plugins/FocusFlowCard'
+import { BreatheAICard } from '@/components/plugins/BreatheAICard'
+import { ToneTunerCard } from '@/components/plugins/ToneTunerCard'
+import { EmotionChartsCard } from '@/components/plugins/EmotionChartsCard'
+import { AuroraThemePackCard } from '@/components/plugins/AuroraThemePackCard'
+import { NotionSyncCard } from '@/components/plugins/NotionSyncCard'
+import { PatternPredictorCard } from '@/components/plugins/PatternPredictorCard'
 
 const Dashboard = () => {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, isPluginInstalled } = useAuthStore()
   const { 
     mood, 
     goals,
@@ -26,6 +34,10 @@ const Dashboard = () => {
   } = useAppStore()
   
   const [activeSection, setActiveSection] = useState<'overview' | 'goals' | 'habits' | 'plan'>('overview')
+  const [highlightedPlugin, setHighlightedPlugin] = useState<string | null>(null)
+  const pluginSectionRef = useRef<HTMLDivElement | null>(null)
+  const location = useLocation()
+  const installedPlugins = user?.installedPlugins ?? []
 
   useEffect(() => {
     setMood({
@@ -36,6 +48,31 @@ const Dashboard = () => {
     })
     updateEmotionHue()
   }, [setMood, updateEmotionHue])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const pluginId = params.get('plugin')
+
+    if (pluginId && installedPlugins.includes(pluginId)) {
+      setActiveSection('overview')
+      setHighlightedPlugin(pluginId)
+
+      const timeoutId = window.setTimeout(() => {
+        setHighlightedPlugin(null)
+      }, 6000)
+
+      requestAnimationFrame(() => {
+        pluginSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+
+      return () => {
+        window.clearTimeout(timeoutId)
+      }
+    }
+
+    setHighlightedPlugin(null)
+    return undefined
+  }, [location.search, installedPlugins])
 
   const todayPlan = getTodayPlan()
   const activeHabits = habits.filter(h => h.streak > 0)
@@ -199,7 +236,8 @@ const Dashboard = () => {
             transition={{ duration: 0.4 }}
           >
             {activeSection === 'overview' && (
-              <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="space-y-6">
+                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Emotion Pulse */}
                 <GlassCard className="lg:col-span-2">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-0">
@@ -290,6 +328,59 @@ const Dashboard = () => {
                     View all goals →
                   </button>
                 </GlassCard>
+              </div>
+                {(isPluginInstalled('1') || isPluginInstalled('2') || isPluginInstalled('3') || isPluginInstalled('4') || isPluginInstalled('5') || isPluginInstalled('6') || isPluginInstalled('7') || isPluginInstalled('8')) && (
+                  <div ref={pluginSectionRef}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg sm:text-xl font-medium text-ink-800">Active Plugins</h3>
+                      <button
+                        onClick={() => navigate('/marketplace')}
+                        className="text-sm text-lilac-600 hover:text-lilac-700 font-medium"
+                      >
+                        Manage plugins →
+                      </button>
+                    </div>
+                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+                      {isPluginInstalled('1') && (
+                        <MoodMelodyCard
+                          onNavigateToSensory={() => navigate('/sensory-expansion')}
+                          highlighted={highlightedPlugin === '1'}
+                        />
+                      )}
+                      {isPluginInstalled('2') && (
+                        <FocusFlowCard highlighted={highlightedPlugin === '2'} />
+                      )}
+                      {isPluginInstalled('3') && (
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <ToneTunerCard highlighted={highlightedPlugin === '3'} />
+                        </div>
+                      )}
+                      {isPluginInstalled('4') && (
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <EmotionChartsCard highlighted={highlightedPlugin === '4'} />
+                        </div>
+                      )}
+                      {isPluginInstalled('5') && (
+                        <BreatheAICard highlighted={highlightedPlugin === '5'} />
+                      )}
+                      {isPluginInstalled('6') && (
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <NotionSyncCard highlighted={highlightedPlugin === '6'} />
+                        </div>
+                      )}
+                      {isPluginInstalled('7') && (
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <AuroraThemePackCard highlighted={highlightedPlugin === '7'} />
+                        </div>
+                      )}
+                      {isPluginInstalled('8') && (
+                        <div className="md:col-span-2 xl:col-span-3">
+                          <PatternPredictorCard highlighted={highlightedPlugin === '8'} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
