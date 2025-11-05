@@ -341,7 +341,7 @@ export const useAppStore = create<AppStore>()(
   setLastSync: (date: Date | null) => set({ lastSync: date }),
     }),
     {
-      name: 'lifeos-storage',
+      name: 'eunonix-storage',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       onRehydrateStorage: () => (state) => {
@@ -361,7 +361,7 @@ export const useAppStore = create<AppStore>()(
             applyThemeToDocument(state.activeThemeId ?? 'default')
           }
         } catch (error) {
-          console.warn('[LifeOS] Failed to rehydrate emotion hue.', error)
+          console.warn('[Eunonix] Failed to rehydrate emotion hue.', error)
         }
       },
     }

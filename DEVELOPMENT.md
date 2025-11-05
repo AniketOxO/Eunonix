@@ -1,4 +1,4 @@
-# 🧬 LifeOS Development Guide
+# 🧬 Eunonix Development Guide
 
 ## 🚀 Quick Start
 
@@ -144,4 +144,4 @@ Every design decision prioritizes:
 
 ---
 
-**LifeOS** - Your mind deserves peace, not performance.
+**Eunonix** - Your mind deserves peace, not performance.

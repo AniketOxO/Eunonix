@@ -3,7 +3,7 @@
 ## Overview
 **"Where emotion meets sensory tech."**
 
-The Sensory Expansion feature transforms your LifeOS environment into a living, breathing multi-sensory experience that adapts to your emotional state in real-time.
+The Sensory Expansion feature transforms your Eunonix environment into a living, breathing multi-sensory experience that adapts to your emotional state in real-time.
 
 ---
 
@@ -323,8 +323,8 @@ Inspired by:
 ## Support
 
 For issues, questions, or feature requests:
-- 📧 Email: support@lifeos.app
-- 💬 Community: [community.lifeos.app](https://community.lifeos.app)
+- 📧 Email: support@eunonix.app
+- 💬 Community: [community.eunonix.app](https://community.eunonix.app)
 - 🐛 Bug reports: GitHub Issues
 - 💡 Feature requests: Product roadmap
 
@@ -332,8 +332,8 @@ For issues, questions, or feature requests:
 
 ## License
 
-Part of the LifeOS platform.  
-© 2025 LifeOS. All rights reserved.
+Part of the Eunonix platform.  
+© 2025 Eunonix. All rights reserved.
 
 ---
 

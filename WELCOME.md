@@ -1,6 +1,6 @@
-# 🧬 Welcome to LifeOS
+# 🧬 Welcome to Eunonix
 
-![LifeOS](https://img.shields.io/badge/LifeOS-The_Calm_Future-blueviolet?style=for-the-badge)
+![Eunonix](https://img.shields.io/badge/Eunonix-The_Calm_Future-blueviolet?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-In_Development-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)
 
@@ -8,7 +8,7 @@
 
 ## ✨ What You've Created
 
-**LifeOS** is now live at: **http://localhost:5173/**
+**Eunonix** is now live at: **http://localhost:5173/**
 
 A beautiful, calm digital sanctuary where technology feels like therapy, not pressure.
 
@@ -85,7 +85,7 @@ A beautiful, calm digital sanctuary where technology feels like therapy, not pre
 ## 📂 Project Structure
 
 ```
-lifeos/
+eunonix/
 ├── src/
 │   ├── components/          ✨ Beautiful, reusable components
 │   │   ├── Ripple.tsx      🌊 Expanding ripple effect
@@ -227,7 +227,7 @@ The AI assistant represented as a breathing halo with rotating layers and partic
 
 ## 🌟 What Makes This Special
 
-Unlike productivity apps that stress you out with metrics and deadlines, **LifeOS** is designed to help you:
+Unlike productivity apps that stress you out with metrics and deadlines, **Eunonix** is designed to help you:
 
 ✨ **Understand** your patterns without judgment  
 ✨ **Sync** your life without overwhelm  
@@ -268,5 +268,5 @@ Scroll slowly. Notice the details. Feel the calm.
 
 ---
 
-**LifeOS** 🧬  
+**Eunonix** 🧬  
 *Where your mind meets clarity.*

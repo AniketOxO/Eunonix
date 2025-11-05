@@ -66,7 +66,7 @@ const Journal = () => {
 
   // Load entries from storage
   useEffect(() => {
-  const saved = readJSON<Array<Omit<JournalEntry, 'date'> & { date: string }>>('lifeos-journal', [])
+    const saved = readJSON<Array<Omit<JournalEntry, 'date'> & { date: string }>>('eunonix-journal', [])
     if (saved.length > 0) {
       setEntries(saved.map((entry) => ({ ...entry, date: new Date(entry.date) })))
     }
@@ -75,9 +75,9 @@ const Journal = () => {
   // Save entries to storage
   useEffect(() => {
     if (entries.length > 0) {
-      writeJSON('lifeos-journal', entries)
+      writeJSON('eunonix-journal', entries)
     } else {
-      removeItem('lifeos-journal')
+      removeItem('eunonix-journal')
     }
   }, [entries])
 

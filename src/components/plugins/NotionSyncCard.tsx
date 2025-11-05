@@ -22,8 +22,8 @@ interface NotionSyncCardProps {
 
 export const NotionSyncCard = ({ highlighted = false }: NotionSyncCardProps) => {
   const { reflections, goals, habits, dayPlans, lastSync, setLastSync } = useAppStore()
-  const [workspaceUrl, setWorkspaceUrl] = useState('https://www.notion.so/lifeos/command-center')
-  const [databaseId, setDatabaseId] = useState('LifeOS-Emotional-Graph')
+  const [workspaceUrl, setWorkspaceUrl] = useState('https://www.notion.so/eunonix/command-center')
+  const [databaseId, setDatabaseId] = useState('Eunonix-Emotional-Graph')
   const [targets, setTargets] = useState(initialTargets)
   const [status, setStatus] = useState<'idle' | 'syncing' | 'success'>('idle')
   const [log, setLog] = useState<string[]>([])
@@ -83,7 +83,7 @@ export const NotionSyncCard = ({ highlighted = false }: NotionSyncCardProps) => 
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-ink-400">Notion Sync</p>
           <h3 className="text-xl font-medium text-ink-900">Bi-directional Knowledge Link</h3>
-          <p className="text-sm text-ink-500 mt-1 max-w-md">Push your LifeOS reflections, goals, and habit telemetry directly into your Notion workspace.</p>
+          <p className="text-sm text-ink-500 mt-1 max-w-md">Push your Eunonix reflections, goals, and habit telemetry directly into your Notion workspace.</p>
         </div>
         <div className="px-3 py-2 rounded-xl bg-white/70 border border-ink-200/40 text-xs text-ink-500">
           Last sync:{' '}

@@ -2,13 +2,6 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
 
-const EMOTION_WEIGHT: Record<string, number> = {
-  calm: 0.4,
-  motivated: 0.75,
-  empathetic: 0.6,
-  rest: 0.3
-}
-
 const EMOTION_COLOR: Record<string, string> = {
   calm: '#60a5fa',
   motivated: '#f97316',

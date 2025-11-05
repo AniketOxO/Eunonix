@@ -12,8 +12,8 @@ If you're seeing old user data (like "sdf"), you need to clear the browser cache
 2. Go to "Console" tab
 3. Paste this code:
 ```javascript
-localStorage.removeItem('lifeos-auth')
-localStorage.removeItem('lifeos-user')
+localStorage.removeItem('eunonix-auth')
+localStorage.removeItem('eunonix-user')
 location.reload()
 ```
 4. Press Enter

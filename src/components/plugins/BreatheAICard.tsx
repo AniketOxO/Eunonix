@@ -11,12 +11,12 @@ const CALMING_TRACKS = [
   {
     title: 'Gentle Breathing',
     artist: 'Aeria',
-    url: 'https://open.spotify.com/track/1bKvFGk3jfbQ3VIAtF5pPz?si=lifeos_breathe_ai'
+    url: 'https://open.spotify.com/track/1bKvFGk3jfbQ3VIAtF5pPz?si=eunonix_breathe_ai'
   },
   {
     title: 'Slow Horizons',
     artist: 'Evening Tape',
-    url: 'https://open.spotify.com/track/0S4dDuO8N58dS9J33qG1Ui?si=lifeos_breathe_ai'
+    url: 'https://open.spotify.com/track/0S4dDuO8N58dS9J33qG1Ui?si=eunonix_breathe_ai'
   }
 ]
 

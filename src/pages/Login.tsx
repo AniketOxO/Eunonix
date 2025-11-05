@@ -16,10 +16,10 @@ export default function Login() {
 
   // Clear old auth data on mount if exists
   useEffect(() => {
-    const oldUserData = localStorage.getItem('lifeos-user')
+    const oldUserData = localStorage.getItem('eunonix-user')
     if (oldUserData) {
       console.log('Clearing old user data format...')
-      localStorage.removeItem('lifeos-user')
+      localStorage.removeItem('eunonix-user')
     }
   }, [])
 

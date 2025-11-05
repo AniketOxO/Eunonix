@@ -17,7 +17,7 @@ export interface UserData {
   }
 }
 
-const USER_STORAGE_KEY = 'lifeos-user'
+const USER_STORAGE_KEY = 'eunonix-user'
 
 const defaultUser: UserData = {
   name: 'User',

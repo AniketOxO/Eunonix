@@ -211,11 +211,11 @@ export const FocusFlowCard = ({ highlighted = false }: FocusFlowCardProps) => {
       body.classList.remove('show-native-cursor')
     }
 
-    document.dispatchEvent(new Event('lifeos-cursor-visibility-change'))
+    document.dispatchEvent(new Event('eunonix-cursor-visibility-change'))
 
     return () => {
       body.classList.remove('show-native-cursor')
-      document.dispatchEvent(new Event('lifeos-cursor-visibility-change'))
+      document.dispatchEvent(new Event('eunonix-cursor-visibility-change'))
     }
   }, [isFullScreen])
 

@@ -104,15 +104,15 @@ And provides:
 2. Choose your preferred AI personality
 3. Type your message or click a quick prompt
 4. Have a conversation!
-5. AI references your real LifeOS data
+5. AI references your real Eunonix data
 6. Clear conversation anytime to start fresh
 
 ---
 
 ## 💾 Data Persistence
 
-- **Journal entries** saved in `localStorage` as `lifeos-journal`
-- **AI conversations** saved in `localStorage` as `lifeos-companion`
+- **Journal entries** saved in `localStorage` as `eunonix-journal`
+- **AI conversations** saved in `localStorage` as `eunonix-companion`
 - All data persists across browser sessions
 - No data sent to external servers (fully private!)
 

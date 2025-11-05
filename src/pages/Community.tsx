@@ -980,13 +980,13 @@ const Community = () => {
 
   // Load data from storage
   useEffect(() => {
-    const savedVersion = safeStorage.getItem('lifeos-community-version')
+    const savedVersion = safeStorage.getItem('eunonix-community-version')
     const needsReset = savedVersion !== COMMUNITY_VERSION
     
-    const savedChannels = readJSON<any[]>('lifeos-channels', [])
-    const savedReflections = readJSON<any[]>('lifeos-reflections', [])
-    const savedQuests = readJSON<any[]>('lifeos-quests', [])
-    const savedProgress = readJSON<any[]>('lifeos-progress', [])
+    const savedChannels = readJSON<any[]>('eunonix-channels', [])
+    const savedReflections = readJSON<any[]>('eunonix-reflections', [])
+    const savedQuests = readJSON<any[]>('eunonix-quests', [])
+    const savedProgress = readJSON<any[]>('eunonix-progress', [])
 
     if (!needsReset && savedChannels.length > 0) {
       setChannels(
@@ -1031,24 +1031,24 @@ const Community = () => {
     }
     
     // Save version after loading data
-    safeStorage.setItem('lifeos-community-version', COMMUNITY_VERSION)
+    safeStorage.setItem('eunonix-community-version', COMMUNITY_VERSION)
   }, [])
 
   // Save to storage whenever data changes
   useEffect(() => {
-    writeJSON('lifeos-channels', channels)
+    writeJSON('eunonix-channels', channels)
   }, [channels])
 
   useEffect(() => {
-    writeJSON('lifeos-reflections', reflections)
+    writeJSON('eunonix-reflections', reflections)
   }, [reflections])
 
   useEffect(() => {
-    writeJSON('lifeos-quests', quests)
+    writeJSON('eunonix-quests', quests)
   }, [quests])
 
   useEffect(() => {
-    writeJSON('lifeos-progress', sharedProgress)
+    writeJSON('eunonix-progress', sharedProgress)
   }, [sharedProgress])
 
   // Channel functions

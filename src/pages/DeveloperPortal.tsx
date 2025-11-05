@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from '@/components/Button'
+import { Modal } from '@/components/Modal'
 
 const DeveloperPortal = () => {
   const navigate = useNavigate()
@@ -12,6 +13,7 @@ const DeveloperPortal = () => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [showNewKey, setShowNewKey] = useState<string | null>(null)
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null)
+  const [keyPendingRevoke, setKeyPendingRevoke] = useState<string | null>(null)
   const documentationRef = useRef<HTMLDivElement | null>(null)
   const codeRef = useRef<HTMLDivElement | null>(null)
   const playgroundRef = useRef<HTMLDivElement | null>(null)
@@ -25,7 +27,7 @@ const DeveloperPortal = () => {
   const docSections = useMemo(() => ({
     overview: {
       title: 'API Overview',
-      description: 'LifeOS Emotional API lets you surface real-time affective telemetry, behaviour streaks, and goal velocity for custom integrations.',
+      description: 'Eunonix Emotional API lets you surface real-time affective telemetry, behaviour streaks, and goal velocity for custom integrations.',
       bullets: [
         'Latency-optimised streaming channel for mood and energy updates.',
         'REST endpoints expose consolidated emotional state snapshots.',
@@ -62,10 +64,10 @@ const DeveloperPortal = () => {
   }), [])
 
   const codeExamples = useMemo(() => ({
-    typescript: `import { LifeOSEmotionalAPI } from '@lifeos/emotional-api'
+    typescript: `import { EunonixEmotionalAPI } from '@eunonix/emotional-api'
 
-const client = new LifeOSEmotionalAPI({
-  apiKey: process.env.LIFEOS_KEY!,
+const client = new EunonixEmotionalAPI({
+  apiKey: process.env.EUNONIX_KEY!,
   webhookUrl: 'https://your-app.com/webhook'
 })
 
@@ -73,10 +75,10 @@ const emotion = await client.getCurrentEmotion()
 console.log('Dominant emotion:', emotion.emotion)
 console.log('Energy level:', emotion.energyLevel)
 `,
-    python: `from lifeos import LifeOSEmotionalAPI
+    python: `from eunonix import EunonixEmotionalAPI
 
-client = LifeOSEmotionalAPI(
-    api_key=os.environ['LIFEOS_KEY'],
+client = EunonixEmotionalAPI(
+    api_key=os.environ['EUNONIX_KEY'],
     webhook_url='https://your-app.com/webhook'
 )
 
@@ -84,8 +86,8 @@ emotion = client.current_emotion()
 print('Dominant emotion:', emotion['emotion'])
 print('Energy level:', emotion['energyLevel'])
 `,
-    curl: `curl https://api.lifeos.app/v1/emotion/current \\
-  -H "Authorization: Bearer $LIFEOS_KEY" \\
+    curl: `curl https://api.eunonix.app/v1/emotion/current \\
+  -H "Authorization: Bearer $EUNONIX_KEY" \\
   -H "Content-Type: application/json"`
   }), [])
 
@@ -184,9 +186,17 @@ print('Energy level:', emotion['energyLevel'])
   }
 
   const handleRevokeKey = (key: string) => {
-    if (confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
-      revokeAPIKey(key)
-    }
+    setKeyPendingRevoke(key)
+  }
+
+  const handleConfirmRevoke = () => {
+    if (!keyPendingRevoke) return
+    revokeAPIKey(keyPendingRevoke)
+    setKeyPendingRevoke(null)
+  }
+
+  const handleCancelRevoke = () => {
+    setKeyPendingRevoke(null)
   }
 
   const handleCopySnippet = (language: string) => {
@@ -217,7 +227,7 @@ print('Energy level:', emotion['energyLevel'])
               onClick={() => navigate('/')}
               whileHover={{ scale: 1.02 }}
             >
-              <h1 className="text-2xl font-semibold text-ink-800">LifeOS</h1>
+              <h1 className="text-2xl font-semibold text-ink-800">Eunonix</h1>
               <span className="text-sm text-ink-500 font-light">Developer Portal</span>
             </motion.div>
             <div className="flex items-center gap-4">
@@ -264,7 +274,7 @@ print('Energy level:', emotion['energyLevel'])
                 Welcome to the <span className="text-gradient font-medium">Developer Portal</span>
               </h1>
               <p className="text-lg text-ink-600 mb-8">
-                Build on top of LifeOS's Emotional API and publish plugins to our marketplace
+                Build on top of Eunonix's Emotional API and publish plugins to our marketplace
               </p>
               <Button onClick={handleCreateProfile} size="lg">
                 Create Developer Profile
@@ -463,16 +473,16 @@ print('Energy level:', emotion['energyLevel'])
                 <div>
                   <h3 className="text-lg font-medium text-ink-800 mb-3">1. Install the SDK</h3>
                   <div className="bg-ink-900 rounded-xl p-4 font-mono text-sm text-green-400">
-                    npm install @lifeos/emotional-api
+                    npm install @eunonix/emotional-api
                   </div>
                 </div>
 
                 <div>
                   <h3 className="text-lg font-medium text-ink-800 mb-3">2. Initialize the Client</h3>
                   <div className="bg-ink-900 rounded-xl p-4 font-mono text-sm">
-                    <pre className="text-green-400">{`import { LifeOSEmotionalAPI } from '@lifeos/emotional-api'
+                    <pre className="text-green-400">{`import { EunonixEmotionalAPI } from '@eunonix/emotional-api'
 
-const client = new LifeOSEmotionalAPI({
+const client = new EunonixEmotionalAPI({
   apiKey: 'your_api_key_here',
   webhookUrl: 'https://your-app.com/webhook'
 })`}</pre>
@@ -583,7 +593,38 @@ client.subscribe((data) => {
             </motion.div>
           </div>
         )}
-      </main>
+        </main>
+
+        {/* Confirmation modal for API key revocation */}
+        <Modal
+          isOpen={Boolean(keyPendingRevoke)}
+          onClose={handleCancelRevoke}
+          title="Revoke API Key"
+        >
+          <div className="space-y-6">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-sm text-red-700">
+                Revoking this key immediately cuts off any integrations using it. This action cannot be undone.
+              </p>
+            </div>
+            {keyPendingRevoke && (
+              <div className="p-4 bg-white border border-ink-200/60 rounded-xl">
+                <p className="text-xs uppercase text-ink-500 tracking-wide mb-1">Key</p>
+                <code className="text-sm font-mono text-ink-800 break-all">
+                  {keyPendingRevoke.substring(0, 16)}...{keyPendingRevoke.substring(keyPendingRevoke.length - 4)}
+                </code>
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
+              <Button variant="ghost" onClick={handleCancelRevoke}>
+                Keep Key Active
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700" onClick={handleConfirmRevoke}>
+                Revoke Key
+              </Button>
+            </div>
+          </div>
+        </Modal>
     </div>
   )
 }

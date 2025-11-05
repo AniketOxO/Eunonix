@@ -42,11 +42,11 @@ export const CustomCursor = () => {
     updateVisibility()
 
     document.addEventListener('fullscreenchange', updateVisibility)
-    document.addEventListener('lifeos-cursor-visibility-change', updateVisibility)
+    document.addEventListener('eunonix-cursor-visibility-change', updateVisibility)
 
     return () => {
       document.removeEventListener('fullscreenchange', updateVisibility)
-      document.removeEventListener('lifeos-cursor-visibility-change', updateVisibility)
+      document.removeEventListener('eunonix-cursor-visibility-change', updateVisibility)
     }
   }, [])
 

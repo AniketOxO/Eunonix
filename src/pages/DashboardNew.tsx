@@ -140,7 +140,7 @@ const Dashboard = () => {
               onClick={() => navigate('/')}
               whileHover={{ scale: 1.05 }}
             >
-              <h1 className="text-xl sm:text-2xl font-semibold text-ink-800">LifeOS</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold text-ink-800">Eunonix</h1>
             </motion.div>
 
             <div className="hidden lg:flex items-center gap-4 xl:gap-6">

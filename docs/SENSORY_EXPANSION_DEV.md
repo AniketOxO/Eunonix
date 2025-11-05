@@ -40,7 +40,7 @@ const connectHueBridge = async () => {
   try {
     const response = await fetch('http://<bridge-ip>/api', {
       method: 'POST',
-      body: JSON.stringify({ devicetype: 'lifeos#sensory' })
+      body: JSON.stringify({ devicetype: 'eunonix#sensory' })
     })
     const data = await response.json()
     const username = data[0].success?.username

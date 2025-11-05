@@ -1,8 +1,8 @@
-# 🎉 LifeOS Enhanced - What's New!
+# 🎉 Eunonix Enhanced - What's New!
 
 ## ✨ **NEW FEATURES ADDED**
 
-Your **LifeOS** dashboard now includes complete life management tools!
+Your **Eunonix** dashboard now includes complete life management tools!
 
 ---
 
@@ -228,7 +228,7 @@ Here's how everything connects:
 
 ## 🚀 **What's Still The Same**
 
-All the original LifeOS features remain:
+All the original Eunonix features remain:
 
 ✨ Emotion-responsive background colors
 ✨ Breathing animations throughout
@@ -322,7 +322,7 @@ From Overview, click:
 
 What makes this different from Todoist, Habitica, or Notion?
 
-| Other Apps | LifeOS |
+| Other Apps | Eunonix |
 |------------|--------|
 | Pressure to perform | Peace while growing |
 | Gamification stress | Gentle encouragement |
@@ -333,7 +333,7 @@ What makes this different from Todoist, Habitica, or Notion?
 
 ---
 
-## 🧬 **LifeOS Enhanced**
+## 🧬 **Eunonix Enhanced**
 
 **Same philosophy. More power.**
 
@@ -353,4 +353,4 @@ What makes this different from Todoist, Habitica, or Notion?
 
 ---
 
-*LifeOS — Upgrade yourself, one thought at a time.* 🧬
+*Eunonix — Upgrade yourself, one thought at a time.* 🧬

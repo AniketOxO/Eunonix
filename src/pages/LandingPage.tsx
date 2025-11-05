@@ -46,7 +46,7 @@ const LandingPage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            LifeOS
+            Eunonix
           </motion.div>
           
           <motion.div 
@@ -97,7 +97,7 @@ const LandingPage = () => {
             animate="visible"
             transition={{ delay: 0.5, duration: 0.8 }}
           >
-            LifeOS helps you understand it — one thought at a time.
+            Eunonix helps you understand it — one thought at a time.
           </motion.p>
 
           <motion.div
@@ -350,7 +350,7 @@ const LandingPage = () => {
             </p>
             
             <p className="text-base sm:text-lg lg:text-xl text-ink-500 px-4">
-              LifeOS runs privately, learning only what helps you grow.
+              Eunonix runs privately, learning only what helps you grow.
             </p>
 
             <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-ink-200/30">
@@ -540,7 +540,7 @@ const LandingPage = () => {
               <Button onClick={() => navigate('/dashboard')} className="text-sm sm:text-base">
                 Explore Dashboard
               </Button>
-              <p className="text-xs sm:text-sm text-ink-400">Real-time visualization inside LifeOS Studio.</p>
+              <p className="text-xs sm:text-sm text-ink-400">Real-time visualization inside Eunonix Studio.</p>
             </motion.div>
           </div>
 
@@ -638,7 +638,7 @@ const LandingPage = () => {
                   
                   <h3 className="text-2xl sm:text-3xl font-light text-ink-900 mb-3">Plugin Marketplace</h3>
                   <p className="text-ink-600 mb-8 leading-relaxed">
-                    Extend LifeOS with integrations for Notion, Spotify, fitness trackers, and more
+                    Extend Eunonix with integrations for Notion, Spotify, fitness trackers, and more
                   </p>
                   
                   <motion.button
@@ -702,7 +702,7 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 mb-8 sm:mb-12">
             <div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-ink-800 mb-3 sm:mb-4">LifeOS</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold text-ink-800 mb-3 sm:mb-4">Eunonix</h3>
               <p className="text-sm sm:text-base text-ink-600">
                 Where your mind meets clarity.
               </p>
@@ -737,7 +737,7 @@ const LandingPage = () => {
           </div>
           
           <div className="text-center text-ink-400 text-sm">
-            <p>© 2025 LifeOS. Your mind deserves peace, not performance.</p>
+            <p>© 2025 Eunonix. Your mind deserves peace, not performance.</p>
           </div>
         </div>
       </footer>

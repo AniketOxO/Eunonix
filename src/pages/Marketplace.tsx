@@ -50,7 +50,7 @@ const SAMPLE_PLUGINS: MarketplacePlugin[] = [
   {
     id: '2',
     name: 'Focus Flow',
-    description: 'Pomodoro timer that pulls your current mental mode from LifeOS',
+    description: 'Pomodoro timer that pulls your current mental mode from Eunonix',
     developer: 'ProductiveMind',
     category: 'productivity',
     price: 4.99,
@@ -241,7 +241,7 @@ const Marketplace = () => {
               onClick={() => navigate('/')}
               whileHover={{ scale: 1.02 }}
             >
-              <h1 className="text-2xl font-semibold text-ink-800">LifeOS Marketplace</h1>
+              <h1 className="text-2xl font-semibold text-ink-800">Eunonix Marketplace</h1>
             </motion.div>
             <div className="flex items-center gap-3">
               <Button variant="ghost" onClick={() => navigate('/developer')}>
@@ -303,7 +303,7 @@ const Marketplace = () => {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-ink-800">Build on LifeOS</p>
+                  <p className="font-medium text-ink-800">Build on Eunonix</p>
                   <p className="text-sm text-ink-600">Access our Emotional API and publish your plugins</p>
                 </div>
               </div>

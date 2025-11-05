@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
@@ -49,7 +49,7 @@ const DigitalSoul = () => {
 
   // Load journal entries
   useEffect(() => {
-    const saved = readJSON<Array<Record<string, any> & { date: string }>>('lifeos-journal', [])
+    const saved = readJSON<Array<Record<string, any> & { date: string }>>('eunonix-journal', [])
     if (saved.length > 0) {
       setJournalEntries(saved.map((entry) => ({ ...entry, date: new Date(entry.date) })))
     }
@@ -179,7 +179,7 @@ const DigitalSoul = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `lifeos-backup-${formatDate(new Date()).replace(/\s/g, '-')}.json`
+    a.download = `eunonix-backup-${formatDate(new Date()).replace(/\s/g, '-')}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -197,7 +197,7 @@ const DigitalSoul = () => {
         
   // Restore data to storage
         if (data.userData) {
-          writeJSON('lifeos-storage', {
+          writeJSON('eunonix-storage', {
             state: {
               goals: data.userData.goals,
               habits: data.userData.habits,
@@ -208,7 +208,7 @@ const DigitalSoul = () => {
           })
 
           if (data.userData.journal) {
-            writeJSON('lifeos-journal', data.userData.journal)
+            writeJSON('eunonix-journal', data.userData.journal)
           }
         }
 
@@ -236,9 +236,9 @@ const DigitalSoul = () => {
   }
 
   const getDataSize = () => {
-  const data = safeStorage.getItem('lifeos-storage') || ''
-  const journal = safeStorage.getItem('lifeos-journal') || ''
-  const companion = safeStorage.getItem('lifeos-companion') || ''
+  const data = safeStorage.getItem('eunonix-storage') || ''
+  const journal = safeStorage.getItem('eunonix-journal') || ''
+  const companion = safeStorage.getItem('eunonix-companion') || ''
     const totalBytes = data.length + journal.length + companion.length
     return (totalBytes / 1024).toFixed(2) + ' KB'
   }
@@ -692,7 +692,7 @@ const DigitalSoul = () => {
                 </div>
                 <h2 className="text-2xl font-semibold text-ink-800 mb-3">Sync Across Devices</h2>
                 <p className="text-ink-600 mb-6">
-                  Keep your LifeOS synchronized across all your devices (coming soon)
+                  Keep your Eunonix synchronized across all your devices (coming soon)
                 </p>
 
                 {/* Sync Status */}

@@ -1,4 +1,4 @@
-# 🧬 LifeOS
+# 🧬 Eunonix
 
 **"Upgrade Yourself, One Thought at a Time."**
 

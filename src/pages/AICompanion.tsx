@@ -221,7 +221,7 @@ const AICompanion = () => {
       messages: Message[]
       personality?: AIPersonality
       trainingData?: TrainingData
-    } | null>('lifeos-companion', null)
+    } | null>('eunonix-companion', null)
     
     if (saved && Array.isArray(saved.messages)) {
       setMessages(saved.messages.map((m) => ({ ...m, timestamp: new Date(m.timestamp) })))
@@ -248,7 +248,7 @@ const AICompanion = () => {
   // Save conversation and training data
   useEffect(() => {
     if (messages.length > 0) {
-      writeJSON('lifeos-companion', { messages, personality, trainingData })
+      writeJSON('eunonix-companion', { messages, personality, trainingData })
     }
   }, [messages, personality, trainingData])
 

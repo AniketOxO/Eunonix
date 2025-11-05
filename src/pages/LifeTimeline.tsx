@@ -67,7 +67,7 @@ export default function LifeTimeline() {
 
   const loadTimelineData = () => {
     // Load persisted timeline inputs (journal, goals, habits, etc.)
-    const journalData = readJSON<unknown>('lifeos-journal', [])
+    const journalData = readJSON<unknown>('eunonix-journal', [])
 
     const entries: TimelineEntry[] = []
 
@@ -152,7 +152,7 @@ export default function LifeTimeline() {
     const phases: TimelineEntry[][] = []
     let currentPhase: TimelineEntry[] = []
 
-    sortedEntries.forEach((entry, index) => {
+  sortedEntries.forEach((entry) => {
       if (currentPhase.length === 0) {
         currentPhase.push(entry)
         return
@@ -209,8 +209,8 @@ export default function LifeTimeline() {
   }
 
   const analyzePhaseTheme = (entries: TimelineEntry[], emotion: string) => {
-    const tags = entries.flatMap(e => e.tags)
-    const topTags = getMostFrequentN(tags, 3)
+  const tags = entries.flatMap(e => e.tags)
+  const topTags = getMostFrequentN(tags, 3)
 
     const themes: Record<string, any> = {
       'struggle': {
@@ -251,7 +251,16 @@ export default function LifeTimeline() {
       }
     }
 
-    return themes[emotion] || themes['calm']
+    const baseTheme = themes[emotion] || themes['calm']
+
+    if (topTags.length === 0) {
+      return baseTheme
+    }
+
+    return {
+      ...baseTheme,
+      description: `${baseTheme.description} Key focuses: ${topTags.join(', ')}.`
+    }
   }
 
   const getMostFrequentN = (arr: string[], n: number): string[] => {

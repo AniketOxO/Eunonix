@@ -38,7 +38,7 @@ const MindMap = () => {
   // Load journal entries from storage
   const [journalEntries, setJournalEntries] = useState<any[]>([])
   useEffect(() => {
-    const saved = readJSON<Array<Record<string, any> & { date: string }>>('lifeos-journal', [])
+    const saved = readJSON<Array<Record<string, any> & { date: string }>>('eunonix-journal', [])
     if (saved.length > 0) {
       setJournalEntries(saved.map((entry) => ({ ...entry, date: new Date(entry.date) })))
     }

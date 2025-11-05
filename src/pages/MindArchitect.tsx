@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Button } from '../components/Button'
 import { Modal } from '../components/Modal'
 import { useAppStore } from '../store/useAppStore'
@@ -284,11 +284,9 @@ const MindArchitect = () => {
   const [activeTab, setActiveTab] = useState<TabType>('blueprint')
   const [currentBlueprint, setCurrentBlueprint] = useState<Blueprint | null>(null)
   const [showDesignWizard, setShowDesignWizard] = useState(false)
-  const [wizardStep, setWizardStep] = useState(1)
   const [futureVision, setFutureVision] = useState('')
   const [systemFiles, setSystemFiles] = useState<SystemFile[]>([])
   const [upgradeTasks, setUpgradeTasks] = useState<UpgradeTask[]>([])
-  const [selectedFile, setSelectedFile] = useState<SystemFile | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [newUpgradeTitle, setNewUpgradeTitle] = useState('')
   const [newUpgradeCurrent, setNewUpgradeCurrent] = useState('')
@@ -297,7 +295,7 @@ const MindArchitect = () => {
 
   // Load data
   useEffect(() => {
-    const data = readJSON<any>('lifeos-mind-architect', null)
+    const data = readJSON<any>('eunonix-mind-architect', null)
     if (data) {
       if (data.blueprint) {
         setCurrentBlueprint({
@@ -338,7 +336,7 @@ const MindArchitect = () => {
   // Save data
   useEffect(() => {
     if (currentBlueprint) {
-      writeJSON('lifeos-mind-architect', {
+      writeJSON('eunonix-mind-architect', {
         blueprint: currentBlueprint,
         systemFiles,
         upgradeTasks,
@@ -441,9 +439,8 @@ const MindArchitect = () => {
       upgrades: []
     }
 
-    setCurrentBlueprint(blueprint)
-    setShowDesignWizard(false)
-    setWizardStep(1)
+  setCurrentBlueprint(blueprint)
+  setShowDesignWizard(false)
     setFutureVision('')
     
     // Generate AI suggestions
@@ -731,8 +728,7 @@ const MindArchitect = () => {
                         key={file.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white/60 backdrop-blur-sm rounded-2xl border border-sand-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => setSelectedFile(file)}
+                        className="bg-white/60 backdrop-blur-sm rounded-2xl border border-sand-200 p-6 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">

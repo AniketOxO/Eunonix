@@ -57,7 +57,7 @@ interface AuthStore {
 // Mock user data (in production, this would come from a backend)
 const DEMO_USER: User = {
   id: 'demo-user-1',
-  email: 'demo@lifeos.app',
+  email: 'demo@eunonix.app',
   name: 'Demo User',
   subscriptionTier: 'free',
   apiKeys: [],
@@ -96,7 +96,7 @@ export const useAuthStore = create<AuthStore>()(
         })
       },
 
-      socialSignIn: async (provider: 'google' | 'github', userData: { email: string; name: string; avatar?: string }) => {
+  socialSignIn: async (_provider: 'google' | 'github', userData: { email: string; name: string; avatar?: string }) => {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500))
         
@@ -193,7 +193,7 @@ export const useAuthStore = create<AuthStore>()(
         const user = get().user
         if (!user) return ''
 
-        const key = `lifeos_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+        const key = `eunonix_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
         
         set({
           user: {
@@ -230,7 +230,7 @@ export const useAuthStore = create<AuthStore>()(
       }
     }),
     {
-      name: 'lifeos-auth',
+      name: 'eunonix-auth',
       version: 1,
       storage: createJSONStorage(() => safeStorage)
     }

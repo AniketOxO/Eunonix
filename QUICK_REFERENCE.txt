@@ -1,6 +1,6 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                                                                     │
-│                    🧬 LIFEOS QUICK REFERENCE                        │
+│                    🧬 EUNONIX QUICK REFERENCE                        │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 
@@ -147,4 +147,4 @@ WELCOME.md          Getting started guide
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🧬 LifeOS — Upgrade yourself, one thought at a time.
+🧬 Eunonix — Upgrade yourself, one thought at a time.

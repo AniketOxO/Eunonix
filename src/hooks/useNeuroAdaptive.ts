@@ -124,7 +124,7 @@ export function useNeuroAdaptive() {
   const [emotionMetrics, setEmotionMetrics] = useState<EmotionMetrics | null>(null)
   const [adaptiveTheme, setAdaptiveTheme] = useState<AdaptiveTheme>(DEFAULT_THEME)
   const [isEnabled, setIsEnabled] = useState(true)
-  const [transitionDuration, setTransitionDuration] = useState(2000) // ms for smooth transitions
+  const [transitionDuration] = useState(2000) // ms for smooth transitions
 
   // Detect emotion periodically
   useEffect(() => {
@@ -162,7 +162,7 @@ export function useNeuroAdaptive() {
       emotionEngine.recordKeystroke(Date.now(), isCorrection)
     }
 
-    let pauseTimer: NodeJS.Timeout
+  let pauseTimer: ReturnType<typeof setTimeout>
     let lastKeyTime = Date.now()
 
     const handleKeyUp = () => {

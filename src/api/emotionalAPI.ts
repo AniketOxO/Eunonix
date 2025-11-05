@@ -1,7 +1,7 @@
 /**
  * Emotional API - The Infrastructure Layer of Emotional Technology
  * 
- * LifeOS becomes the API of human emotion, allowing developers to build
+ * Eunonix becomes the API of human emotion, allowing developers to build
  * apps that safely plug into users' emotional profiles.
  */
 
@@ -107,14 +107,14 @@ export interface FocusStateResponse {
  * API Client SDK
  */
 
-export class LifeOSEmotionalAPI {
+export class EunonixEmotionalAPI {
   private apiKey: string
   private baseURL: string
   private version: string
 
   constructor(apiKey: string, options?: { baseURL?: string; version?: string }) {
     this.apiKey = apiKey
-    this.baseURL = options?.baseURL || 'https://api.lifeos.app'
+    this.baseURL = options?.baseURL || 'https://api.eunonix.app'
     this.version = options?.version || 'v1'
   }
 
@@ -325,11 +325,11 @@ export interface APISecurityConfig {
 
 // Example 1: Music App that adapts to emotion
 export const musicAppExample = `
-const lifeos = new LifeOSEmotionalAPI('your-api-key')
+const eunonix = new EunonixEmotionalAPI('your-api-key')
 
 async function updatePlaylist() {
-  const emotion = await lifeos.getCurrentEmotion()
-  const energy = await lifeos.getEnergyLevel()
+  const emotion = await eunonix.getCurrentEmotion()
+  const energy = await eunonix.getEnergyLevel()
   
   if (emotion.state === 'stressed' && energy.level < 40) {
     // Play calming music
@@ -343,11 +343,11 @@ async function updatePlaylist() {
 
 // Example 2: Writing tool that adapts tone
 export const writingToolExample = `
-const lifeos = new LifeOSEmotionalAPI('your-api-key')
+const eunonix = new EunonixEmotionalAPI('your-api-key')
 
 async function suggestTone() {
-  const cognitive = await lifeos.getCognitiveLoad()
-  const focus = await lifeos.getFocusState()
+  const cognitive = await eunonix.getCognitiveLoad()
+  const focus = await eunonix.getFocusState()
   
   if (cognitive.load === 'high' && focus.state === 'distracted') {
     return 'Use shorter sentences and simpler words'
@@ -359,9 +359,9 @@ async function suggestTone() {
 
 // Example 3: Real-time focus app
 export const focusAppExample = `
-const lifeos = new LifeOSEmotionalAPI('your-api-key')
+const eunonix = new EunonixEmotionalAPI('your-api-key')
 
-const ws = lifeos.subscribe(['focus.deep', 'focus.lost'], (event) => {
+const ws = eunonix.subscribe(['focus.deep', 'focus.lost'], (event) => {
   if (event.event === 'focus.deep') {
     // Start do-not-disturb mode
     enableDND()

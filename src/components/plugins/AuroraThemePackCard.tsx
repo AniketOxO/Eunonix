@@ -23,7 +23,7 @@ export const AuroraThemePackCard = ({ highlighted = false, onThemeActivated }: A
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-ink-400">Aurora Theme Pack</p>
           <h3 className="text-xl font-medium text-ink-900">Bio-responsive Visual Skins</h3>
-          <p className="text-sm text-ink-500 mt-1 max-w-md">Swap the entire LifeOS atmosphere with live gradients, glass textures, and accent hues tuned to your current intent.</p>
+          <p className="text-sm text-ink-500 mt-1 max-w-md">Swap the entire Eunonix atmosphere with live gradients, glass textures, and accent hues tuned to your current intent.</p>
         </div>
         <div className="px-3 py-2 rounded-xl bg-white/70 border border-ink-200/40 text-xs text-ink-500">
           Active: <span className="font-semibold text-ink-700">{activeTheme.name}</span>

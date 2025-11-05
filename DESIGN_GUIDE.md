@@ -1,4 +1,4 @@
-# 🎨 LifeOS Visual Language Guide
+# 🎨 Eunonix Visual Language Guide
 ## "The Calm Future"
 
 ---
@@ -154,7 +154,7 @@ Padding: 1rem 2rem (px-8 py-4)
 
 ### Example Copy
 
-✅ **Good**: "Your mind is alive. LifeOS helps you understand it."  
+✅ **Good**: "Your mind is alive. Eunonix helps you understand it."  
 ❌ **Avoid**: "Maximize productivity! Track everything now!"
 
 ✅ **Good**: "Today I noticed..."  
@@ -290,4 +290,4 @@ When implementing dark mode:
 
 ---
 
-**LifeOS** — Upgrade yourself, one thought at a time. 🧬
+**Eunonix** — Upgrade yourself, one thought at a time. 🧬

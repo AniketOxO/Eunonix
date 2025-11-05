@@ -7,7 +7,7 @@ Welcome to the most immersive emotional experience platform! This guide will hel
 ## 🌟 Getting Started
 
 ### Access the Feature
-1. Log into your LifeOS dashboard
+1. Log into your Eunonix dashboard
 2. Click the **"Sensory"** button in the top navigation
 3. You'll see your current emotional state and available profiles
 
@@ -283,7 +283,7 @@ The system **auto-detects** your emotional state and suggests profiles:
 
 ## ✨ Advanced Features
 
-### Combining with Other LifeOS Tools
+### Combining with Other Eunonix Tools
 - Use with **Journal** to process emotions
 - Pair with **Mind Architect** for goal visualization
 - Try during **Digital Soul** reflection sessions
@@ -318,4 +318,4 @@ Remember:
 ---
 
 **Need Help?** 
-Contact support@lifeos.app or visit our community forums!
+Contact support@eunonix.app or visit our community forums!

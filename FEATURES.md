@@ -1,8 +1,8 @@
-# 🎯 LifeOS Features Guide
+# 🎯 Eunonix Features Guide
 
 ## ✨ New Features Added
 
-Your LifeOS dashboard now includes **powerful life management** features that integrate seamlessly with the calm, breathing interface.
+Your Eunonix dashboard now includes **powerful life management** features that integrate seamlessly with the calm, breathing interface.
 
 ---
 
@@ -131,7 +131,7 @@ All your data is **automatically saved** using Zustand persist:
 
 ## 🎨 Design Philosophy
 
-Every new feature follows LifeOS principles:
+Every new feature follows Eunonix principles:
 
 ### Visual Calm
 - Soft glassmorphism cards
@@ -272,7 +272,7 @@ To get you started, the dashboard includes:
 
 ## 🌊 The Calm Difference
 
-Unlike typical productivity apps that create stress, LifeOS:
+Unlike typical productivity apps that create stress, Eunonix:
 
 ✨ **Shows progress** without pressure
 ✨ **Tracks streaks** without guilt
@@ -318,7 +318,7 @@ Now that you have these features:
 
 ## 🎭 Philosophy in Action
 
-Every feature embodies LifeOS principles:
+Every feature embodies Eunonix principles:
 
 > **"Upgrade yourself — one thought at a time."**
 
@@ -340,6 +340,6 @@ Every feature embodies LifeOS principles:
 
 ---
 
-**🧬 LifeOS** - Now with the power to plan, track, and grow — all while staying calm.
+**🧬 Eunonix** - Now with the power to plan, track, and grow — all while staying calm.
 
 ✨ **Your data. Your growth. Your peace.**

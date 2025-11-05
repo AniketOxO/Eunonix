@@ -80,12 +80,12 @@ export const applyThemeToDocument = (themeId: string) => {
   const theme = THEME_PRESETS.find((preset) => preset.id === themeId) ?? THEME_PRESETS[0]
   const root = document.documentElement
 
-  root.style.setProperty('--lifeos-background', theme.background)
-  root.style.setProperty('--lifeos-card', theme.card)
-  root.style.setProperty('--lifeos-accent', theme.accent)
-  root.style.setProperty('--lifeos-accent-gradient', theme.accentGradient)
-  root.style.setProperty('--lifeos-text', theme.text)
-  root.style.setProperty('--lifeos-neutral', theme.neutral)
-  root.style.setProperty('--lifeos-glow', theme.glow)
-  root.setAttribute('data-lifeos-theme', theme.id)
+  root.style.setProperty('--eunonix-background', theme.background)
+  root.style.setProperty('--eunonix-card', theme.card)
+  root.style.setProperty('--eunonix-accent', theme.accent)
+  root.style.setProperty('--eunonix-accent-gradient', theme.accentGradient)
+  root.style.setProperty('--eunonix-text', theme.text)
+  root.style.setProperty('--eunonix-neutral', theme.neutral)
+  root.style.setProperty('--eunonix-glow', theme.glow)
+  root.setAttribute('data-eunonix-theme', theme.id)
 }

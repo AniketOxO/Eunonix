@@ -23,7 +23,7 @@ const Pricing = () => {
     }
     
     if (tier === 'enterprise') {
-      window.location.href = 'mailto:enterprise@lifeos.app?subject=Enterprise Plan Inquiry'
+      window.location.href = 'mailto:enterprise@eunonix.app?subject=Enterprise Plan Inquiry'
       return
     }
 
@@ -72,7 +72,7 @@ const Pricing = () => {
               onClick={() => navigate('/')}
               whileHover={{ scale: 1.02 }}
             >
-              <h1 className="text-2xl font-semibold text-ink-800">LifeOS</h1>
+              <h1 className="text-2xl font-semibold text-ink-800">Eunonix</h1>
             </motion.div>
             <div className="flex items-center gap-4">
               {isAuthenticated ? (

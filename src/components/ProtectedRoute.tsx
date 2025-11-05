@@ -111,7 +111,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Content */}
               <h2 className="text-3xl font-light text-ink-900 text-center mb-3">
-                Welcome to LifeOS
+                Welcome to Eunonix
               </h2>
               <p className="text-ink-600 text-center mb-8">
                 Your journey to self-discovery awaits
