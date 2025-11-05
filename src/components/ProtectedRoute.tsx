@@ -59,7 +59,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
               <button
                 onClick={() => {
                   setShowPreview(false)
-                  navigate('/')
+                  navigate('/home')
                 }}
                 className="text-ink-400 hover:text-ink-600 transition-colors p-1"
                 aria-label="Close preview"
@@ -144,7 +144,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
                   Preview Dashboard
                 </Button>
                 <Button
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/home')}
                   variant="ghost"
                   className="w-full"
                 >

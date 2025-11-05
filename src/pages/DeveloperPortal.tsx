@@ -224,7 +224,7 @@ print('Energy level:', emotion['energyLevel'])
           <div className="flex items-center justify-between">
             <motion.div
               className="cursor-pointer flex items-center gap-3"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
               whileHover={{ scale: 1.02 }}
             >
               <h1 className="text-2xl font-semibold text-ink-800">Eunonix</h1>

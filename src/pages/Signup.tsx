@@ -278,7 +278,7 @@ export default function Signup() {
         {/* Back to Landing */}
         <div className="mt-6 text-center">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="text-sm text-ink-600 hover:text-ink-900 transition-colors"
           >
             ← Back to home

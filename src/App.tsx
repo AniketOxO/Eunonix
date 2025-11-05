@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import Welcome from '@/pages/Welcome'
 import LandingPage from '@/pages/LandingPage'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
@@ -19,6 +20,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { CustomCursor } from '@/components/CustomCursor'
 import { AuthPrompt } from '@/components/AuthPrompt'
 import Search from '@/pages/Search'
+import APIDocs from '@/pages/APIDocs'
 
 function App() {
 
@@ -27,11 +29,13 @@ function App() {
       <CustomCursor />
       <AuthPrompt />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<Welcome />} />
+        <Route path="/home" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/marketplace" element={<Marketplace />} />
+  <Route path="/api-docs" element={<APIDocs />} />
   <Route path="/search" element={<Search />} />
         
         <Route
@@ -126,7 +130,7 @@ function App() {
           path="/developer"
           element={<DeveloperPortal />}
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+  <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </Router>
   )

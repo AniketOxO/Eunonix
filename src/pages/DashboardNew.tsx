@@ -153,7 +153,7 @@ const Dashboard = () => {
           <div className="max-w-[1800px] mx-auto flex justify-between items-center">
             <motion.div
               className="cursor-pointer"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
               whileHover={{ scale: 1.05 }}
             >
               <h1 className="text-xl sm:text-2xl font-semibold text-ink-800">Eunonix</h1>

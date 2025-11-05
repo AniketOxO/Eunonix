@@ -69,7 +69,7 @@ export function ProfileDropdown() {
 
   const handleLogout = () => {
     signOut()
-    navigate('/')
+  navigate('/home')
   }
 
   const handleSaveProfile = () => {

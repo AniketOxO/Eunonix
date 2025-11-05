@@ -105,40 +105,140 @@ export default function LifeTimeline() {
     setTimelineEntries(entries)
   }
 
-  const mapEmotionToCategory = (emotion: string): TimelineEntry['emotion'] => {
-    const map: Record<string, TimelineEntry['emotion']> = {
-      'happy': 'joy',
-      'excited': 'joy',
-      'grateful': 'joy',
-      'peaceful': 'calm',
-      'content': 'calm',
-      'inspired': 'growth',
-      'motivated': 'growth',
-      'anxious': 'struggle',
-      'sad': 'struggle',
-      'frustrated': 'struggle',
-      'empowered': 'breakthrough',
-      'accomplished': 'breakthrough',
-      'serene': 'peace',
-      'balanced': 'peace'
-    }
-    return map[emotion.toLowerCase()] || 'calm'
+  const EMOTION_CATEGORY_MAP: Record<string, TimelineEntry['emotion']> = {
+    happy: 'joy',
+    joy: 'joy',
+    excited: 'joy',
+    gratitude: 'joy',
+    grateful: 'joy',
+    energized: 'joy',
+    energetic: 'joy',
+    uplifted: 'joy',
+
+    peaceful: 'calm',
+    calm: 'calm',
+    content: 'calm',
+    balanced: 'calm',
+    reflective: 'calm',
+    restful: 'calm',
+
+    inspired: 'growth',
+    motivated: 'growth',
+    creative: 'growth',
+    creativity: 'growth',
+    learning: 'growth',
+    focus: 'growth',
+
+    anxious: 'struggle',
+    anxiety: 'struggle',
+    stressed: 'struggle',
+    stress: 'struggle',
+    overwhelmed: 'struggle',
+    frustrated: 'struggle',
+    tired: 'struggle',
+    exhausted: 'struggle',
+    sad: 'struggle',
+
+    empowered: 'breakthrough',
+    accomplished: 'breakthrough',
+    breakthrough: 'breakthrough',
+
+    serene: 'peace',
+    harmony: 'peace',
+    peace: 'peace',
+    aligned: 'peace',
   }
 
-  const getEmotionIntensity = (emotion: string): number => {
-    const intensityMap: Record<string, number> = {
-      'excited': 9,
-      'anxious': 8,
-      'empowered': 10,
-      'frustrated': 7,
-      'peaceful': 6,
-      'grateful': 8,
-      'sad': 7,
-      'happy': 8,
-      'inspired': 9,
-      'content': 6
+  const EMOTION_INTENSITY_MAP: Record<string, number> = {
+    excited: 9,
+    energized: 9,
+    energetic: 9,
+    joy: 8,
+    happy: 8,
+    gratitude: 8,
+    grateful: 8,
+    inspired: 9,
+    creative: 7,
+    creativity: 7,
+    motivated: 8,
+    focus: 8,
+    learning: 7,
+    anxious: 8,
+    anxiety: 8,
+    stressed: 8,
+    stress: 7,
+    overwhelmed: 8,
+    frustrated: 7,
+    tired: 6,
+    exhausted: 7,
+    sad: 7,
+    empowered: 10,
+    accomplished: 9,
+    breakthrough: 10,
+    peaceful: 6,
+    peace: 6,
+    calm: 6,
+    content: 6,
+    balanced: 6,
+    reflective: 5,
+    serene: 6,
+    harmony: 6,
+    aligned: 6,
+    restful: 5,
+    uplifted: 8,
+  }
+
+  const mapEmotionToCategory = (emotion: string | undefined | null): TimelineEntry['emotion'] => {
+    if (!emotion) {
+      return 'calm'
     }
-    return intensityMap[emotion.toLowerCase()] || 5
+
+    const normalized = emotion.trim().toLowerCase()
+    if (normalized in EMOTION_CATEGORY_MAP) {
+      return EMOTION_CATEGORY_MAP[normalized]
+    }
+
+    // Fall back to base categories using keyword detection
+    if (normalized.includes('anx') || normalized.includes('stress') || normalized.includes('overwhelm')) {
+      return 'struggle'
+    }
+    if (normalized.includes('joy') || normalized.includes('happy') || normalized.includes('energy')) {
+      return 'joy'
+    }
+    if (normalized.includes('inspir') || normalized.includes('creativ') || normalized.includes('grow')) {
+      return 'growth'
+    }
+    if (normalized.includes('peace') || normalized.includes('calm')) {
+      return 'calm'
+    }
+
+    return 'calm'
+  }
+
+  const getEmotionIntensity = (emotion: string | undefined | null): number => {
+    if (!emotion) {
+      return 5
+    }
+
+    const normalized = emotion.trim().toLowerCase()
+    if (normalized in EMOTION_INTENSITY_MAP) {
+      return EMOTION_INTENSITY_MAP[normalized]
+    }
+
+    if (normalized.includes('anx') || normalized.includes('stress')) {
+      return 8
+    }
+    if (normalized.includes('joy') || normalized.includes('energy') || normalized.includes('happy')) {
+      return 8
+    }
+    if (normalized.includes('inspir') || normalized.includes('creativ')) {
+      return 7
+    }
+    if (normalized.includes('tired') || normalized.includes('rest')) {
+      return 5
+    }
+
+    return 5
   }
 
   // AI: Detect life arcs from timeline data
