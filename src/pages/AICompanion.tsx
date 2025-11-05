@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from '@/components/Button'
 import { readJSON, writeJSON } from '@/utils/storage'
+import { useAuthStore } from '@/store/useAuthStore'
 
 interface Message {
   id: string
@@ -85,6 +86,13 @@ const personalities: Record<AIPersonality, { name: string; description: string; 
 const AICompanion = () => {
   const navigate = useNavigate()
   const { habits, goals } = useAppStore()
+  const { canSendAIMessage, recordAIMessage, user, requireAuth, showPlanLimit } = useAuthStore((state) => ({
+    canSendAIMessage: state.canSendAIMessage,
+    recordAIMessage: state.recordAIMessage,
+    user: state.user,
+    requireAuth: state.requireAuth,
+    showPlanLimit: state.showPlanLimit
+  }))
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [personality, setPersonality] = useState<AIPersonality>('friend')
@@ -110,6 +118,8 @@ const AICompanion = () => {
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [aiLimitNotice, setAiLimitNotice] = useState<string | null>(null)
+  const trialEndsAtLabel = user?.trialEndsAt ? new Date(user.trialEndsAt).toLocaleDateString() : null
 
   // Pre-trained knowledge base - EXTENSIVELY TRAINED AI!
   const preTrainedData: TrainingData = {
@@ -760,9 +770,35 @@ const AICompanion = () => {
   }
 
   const handleSendMessage = () => {
-    if (!inputMessage.trim()) return
+    const trimmedMessage = inputMessage.trim()
+    if (!trimmedMessage) return
 
-    const userMessageContent = inputMessage.trim()
+    if (!user) {
+      requireAuth('chat with Eunonix AI', {
+        message: 'Sign in to chat with Eunonix AI and save your progress across devices.'
+      })
+      return
+    }
+
+    const eligibility = canSendAIMessage()
+    if (!eligibility.allowed) {
+      showPlanLimit('chat with Eunonix AI', {
+        message: eligibility.reason ?? 'Upgrade to continue chatting with Eunonix AI.',
+        upgradeTier: 'premium'
+      })
+      return
+    }
+
+    if (eligibility.remaining !== undefined) {
+      const nextRemaining = Math.max(0, eligibility.remaining - 1)
+      setAiLimitNotice(`${nextRemaining} AI messages left this month.`)
+    } else {
+      setAiLimitNotice(null)
+    }
+
+    recordAIMessage()
+
+    const userMessageContent = trimmedMessage
 
     // Add user message
     const userMsg: Message = {
@@ -1059,6 +1095,16 @@ const AICompanion = () => {
 
         {/* Input */}
         <div className="glass-card p-4">
+          {user?.subscriptionStatus === 'trial' && trialEndsAtLabel && (
+            <p className="text-xs text-lilac-600 mb-2">
+              Premium trial active through {trialEndsAtLabel}.
+            </p>
+          )}
+          {aiLimitNotice && (
+            <p className="text-xs text-ink-500 mb-3 text-right">
+              {aiLimitNotice}
+            </p>
+          )}
           <div className="flex gap-2">
             <input
               ref={inputRef}

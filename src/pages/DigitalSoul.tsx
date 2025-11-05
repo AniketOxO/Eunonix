@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { Button } from '@/components/Button'
 import { formatDate } from '@/utils/emotions'
 import { readJSON, writeJSON, safeStorage } from '@/utils/storage'
@@ -39,6 +40,10 @@ interface ExportData {
 const DigitalSoul = () => {
   const navigate = useNavigate()
   const { goals, habits, mood } = useAppStore()
+  const { isAuthenticated, requireAuth } = useAuthStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+    requireAuth: state.requireAuth
+  }))
   
   const [soulProfile, setSoulProfile] = useState<SoulProfile | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -46,6 +51,8 @@ const DigitalSoul = () => {
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('offline')
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [activeTab, setActiveTab] = useState<'soul' | 'backup' | 'sync'>('soul')
+  const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [analysisNotice, setAnalysisNotice] = useState<{ type: 'auth' | 'data'; message: string } | null>(null)
 
   // Load journal entries
   useEffect(() => {
@@ -55,14 +62,53 @@ const DigitalSoul = () => {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setAnalysisNotice({
+        type: 'auth',
+        message: 'Preview mode is read-only. Sign in to build and save your Digital Soul profile.'
+      })
+      return
+    }
+
+    if (analysisNotice?.type === 'auth') {
+      setAnalysisNotice(null)
+    }
+  }, [isAuthenticated, analysisNotice])
+
   // Analyze and build soul profile
   useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
     if (journalEntries.length > 0 || goals.length > 0 || habits.length > 0) {
       analyzeSoul()
     }
-  }, [journalEntries, goals, habits])
+  }, [journalEntries, goals, habits, isAuthenticated])
 
   const analyzeSoul = () => {
+    if (!isAuthenticated) {
+      setAnalysisNotice({
+        type: 'auth',
+        message: 'Sign in to build your Digital Soul profile. Preview mode does not save or analyze personal data.'
+      })
+      requireAuth('build your Digital Soul profile', {
+        title: 'Sign in to build your Digital Soul',
+        message: 'Create a free account to generate a personalized Digital Soul and keep it in sync across devices.'
+      })
+      return
+    }
+
+    if (goals.length === 0 && habits.length === 0 && journalEntries.length === 0) {
+      setAnalysisNotice({
+        type: 'data',
+        message: 'Add at least one goal, habit, or journal reflection to generate meaningful insights.'
+      })
+      return
+    }
+
+    setAnalysisNotice(null)
     setIsAnalyzing(true)
     
     setTimeout(() => {
@@ -194,8 +240,8 @@ const DigitalSoul = () => {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string) as ExportData
-        
-  // Restore data to storage
+
+        // Restore data to storage
         if (data.userData) {
           writeJSON('eunonix-storage', {
             state: {
@@ -212,10 +258,19 @@ const DigitalSoul = () => {
           }
         }
 
-        alert('Data imported successfully! Please refresh the page.')
-        window.location.reload()
+        setImportStatus({
+          type: 'success',
+          message: 'Data imported successfully. Refreshing Eunonix to load your latest memories...'
+        })
+
+        setTimeout(() => {
+          window.location.reload()
+        }, 1200)
       } catch (error) {
-        alert('Error importing data. Please check the file format.')
+        setImportStatus({
+          type: 'error',
+          message: 'We could not import that file. Please confirm the format and try again.'
+        })
       }
     }
     reader.readAsText(file)
@@ -280,6 +335,40 @@ const DigitalSoul = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-8 py-8">
+        {importStatus && (
+          <div
+            className={`mb-6 flex items-start gap-3 rounded-2xl border px-6 py-4 shadow-sm transition-all ${
+              importStatus.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-rose-200 bg-rose-50 text-rose-700'
+            }`}
+          >
+            <span className="mt-0.5">
+              {importStatus.type === 'success' ? (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v4m0 4h.01M10.29 3.86l-8.48 14.7A1 1 0 002.64 20h18.72a1 1 0 00.86-1.44l-8.48-14.7a1 1 0 00-1.72 0z" />
+                </svg>
+              )}
+            </span>
+            <div className="flex-1">
+              <p className="font-medium">
+                {importStatus.type === 'success' ? 'Import complete' : 'Import failed'}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed">{importStatus.message}</p>
+            </div>
+            <button
+              onClick={() => setImportStatus(null)}
+              className="mt-0.5 rounded-full bg-black/5 px-3 py-1 text-xs font-medium uppercase tracking-wide text-current transition-colors hover:bg-black/10"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-8">
           <button
@@ -360,6 +449,18 @@ const DigitalSoul = () => {
               <p className="text-ink-600 max-w-2xl mx-auto">
                 An evolving AI reflection of your thoughts, values, and patterns—built from your goals, habits, and reflections.
               </p>
+
+              {analysisNotice && (
+                <div
+                  className={`mt-6 px-4 py-3 rounded-2xl text-sm font-medium ${
+                    analysisNotice.type === 'auth'
+                      ? 'bg-lilac-100/70 text-lilac-800 border border-lilac-200/60'
+                      : 'bg-amber-100/80 text-amber-800 border border-amber-200/60'
+                  }`}
+                >
+                  {analysisNotice.message}
+                </div>
+              )}
 
               {soulProfile && (
                 <p className="text-xs text-ink-500 mt-4">

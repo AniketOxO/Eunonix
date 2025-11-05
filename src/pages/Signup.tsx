@@ -6,7 +6,8 @@ import { useAuthStore } from '@/store/useAuthStore'
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { signUp, socialSignIn } = useAuthStore()
+  const signUp = useAuthStore((state) => state.signUp)
+  const socialSignIn = useAuthStore((state) => state.socialSignIn)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,12 +42,14 @@ export default function Signup() {
     }
 
     setIsLoading(true)
+    setErrorMessage('')
     try {
-      await signUp(formData.email, formData.password, formData.name.trim() || 'User')
+      const displayName = formData.name.trim() || 'Explorer'
+      await signUp(formData.email, formData.password, displayName, { remember: true })
       navigate('/dashboard')
     } catch (error) {
       console.error('Signup failed:', error)
-      setErrorMessage('Signup failed. Please try again.')
+      setErrorMessage(error instanceof Error ? error.message : 'Signup failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -65,6 +68,7 @@ export default function Signup() {
     if (!socialEmail) return
     
     setIsLoading(true)
+    setErrorMessage('')
     try {
       const emailName = socialEmail.split('@')[0]
       const displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1).replace(/[._-]/g, ' ')
@@ -74,10 +78,11 @@ export default function Signup() {
         name: displayName,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
       }
-      await socialSignIn(showSocialModal!, userData)
+      await socialSignIn(showSocialModal!, userData, { remember: true })
       navigate('/dashboard')
     } catch (error) {
       console.error('Social sign-in failed:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in with that provider. Please try again.')
     } finally {
       setIsLoading(false)
       setShowSocialModal(null)

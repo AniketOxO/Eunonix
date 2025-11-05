@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Ripple } from '@/components/Ripple'
 import { GlassCard } from '@/components/GlassCard'
 import { Button } from '@/components/Button'
@@ -58,12 +58,12 @@ const LandingPage = () => {
             <a href="#features" className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">
               Features
             </a>
-            <button onClick={() => navigate('/pricing')} className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">
+            <Link to="/pricing" className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">
               Pricing
-            </button>
-            <button onClick={() => navigate('/marketplace')} className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">
+            </Link>
+            <Link to="/marketplace" className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">
               Marketplace
-            </button>
+            </Link>
             <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-sm sm:text-base px-4 sm:px-8 py-2 sm:py-4">
               Dashboard
             </Button>
@@ -125,6 +125,7 @@ const LandingPage = () => {
           >
             Upgrade yourself, one thought at a time
           </motion.p>
+
         </div>
       </section>
 

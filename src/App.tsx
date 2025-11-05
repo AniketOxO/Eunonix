@@ -17,18 +17,22 @@ import Marketplace from '@/pages/Marketplace'
 import DeveloperPortal from '@/pages/DeveloperPortal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { CustomCursor } from '@/components/CustomCursor'
+import { AuthPrompt } from '@/components/AuthPrompt'
+import Search from '@/pages/Search'
 
 function App() {
 
   return (
     <Router>
       <CustomCursor />
+      <AuthPrompt />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/marketplace" element={<Marketplace />} />
+  <Route path="/search" element={<Search />} />
         
         <Route
           path="/dashboard"

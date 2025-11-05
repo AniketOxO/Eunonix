@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SUBSCRIPTION_PLANS, FEATURE_COMPARISON } from '@/config/subscriptionPlans'
@@ -7,18 +7,128 @@ import { Button } from '@/components/Button'
 import { useAuthStore } from '@/store/useAuthStore'
 import { PaymentModal } from '@/components/PaymentModal'
 
+type NoticeTone = 'info' | 'success' | 'warning'
+
+interface PlanNoticeAction {
+  label: string
+  onClick: () => void
+  variant?: 'primary' | 'secondary'
+}
+
+interface PlanNotice {
+  title: string
+  message: string
+  tone: NoticeTone
+  actions?: PlanNoticeAction[]
+}
+
+const TONE_GRADIENTS: Record<NoticeTone, string> = {
+  info: 'from-lilac-500/95 to-ink-700/95',
+  success: 'from-emerald-400/95 to-emerald-600/95',
+  warning: 'from-amber-400/95 to-rose-500/95'
+}
+
+const renderNoticeIcon = (tone: NoticeTone) => {
+  if (tone === 'success') {
+    return (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    )
+  }
+
+  if (tone === 'warning') {
+    return (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v4m0 4h.01M10.29 3.86l-8.48 14.7A1 1 0 002.64 20h18.72a1 1 0 00.86-1.44l-8.48-14.7a1 1 0 00-1.72 0z" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M12 21a9 9 0 110-18 9 9 0 010 18z" />
+    </svg>
+  )
+}
+
+const PlanNoticeToast = ({ notice, onClose }: { notice: PlanNotice; onClose: () => void }) => (
+  <motion.div
+    key={`${notice.title}-${notice.message}`}
+    initial={{ opacity: 0, y: 24, scale: 0.95 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: 12, scale: 0.95 }}
+    transition={{ type: 'spring', damping: 18, stiffness: 220 }}
+    className={`pointer-events-auto w-full max-w-md rounded-3xl bg-gradient-to-br ${TONE_GRADIENTS[notice.tone]} text-white shadow-2xl p-6 flex gap-4`}
+  >
+    <div className="shrink-0 flex items-start justify-center pt-0.5 text-white">
+      {renderNoticeIcon(notice.tone)}
+    </div>
+    <div className="flex-1">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold tracking-tight">{notice.title}</h3>
+          <p className="text-sm text-white/85 mt-2 leading-relaxed">{notice.message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="rounded-full bg-white/15 hover:bg-white/25 transition-colors w-8 h-8 flex items-center justify-center"
+          aria-label="Dismiss notification"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      {notice.actions?.length ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {notice.actions.map((action, index) => (
+            <button
+              key={`${action.label}-${index}`}
+              onClick={() => {
+                action.onClick()
+                onClose()
+              }}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                action.variant === 'primary'
+                  ? 'bg-white text-ink-800 hover:bg-white/90'
+                  : 'bg-white/15 text-white hover:bg-white/25'
+              }`}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  </motion.div>
+)
+
 const Pricing = () => {
   const navigate = useNavigate()
-  const { user, isAuthenticated, upgradeSubscription } = useAuthStore()
+  const { user, isAuthenticated, upgradeSubscription, requireAuth } = useAuthStore()
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [planNotice, setPlanNotice] = useState<PlanNotice | null>(null)
 
   const plans = Object.values(SUBSCRIPTION_PLANS)
 
   const handleUpgrade = (tier: SubscriptionTier) => {
-    if (!isAuthenticated) {
-      navigate('/dashboard')
+    const isAuthorized = requireAuth('choose a plan', {
+      message: 'Create a free Eunonix account to pick the plan that fits you best.'
+    })
+
+    if (!isAuthorized) {
+      return
+    }
+
+    if (user?.subscriptionTier === tier) {
+      setPlanNotice({
+        tone: 'warning',
+        title: 'Already on this plan',
+        message: `You are already enjoying the ${SUBSCRIPTION_PLANS[tier].name} plan. Explore other tiers to experience more features.`
+      })
       return
     }
     
@@ -29,8 +139,40 @@ const Pricing = () => {
 
     if (tier === 'free') {
       upgradeSubscription(tier)
-      alert('Switched to Free plan!')
+      setPlanNotice({
+        tone: 'info',
+        title: 'Switched to Free',
+        message: 'You are back on the Free plan. Premium features will pause, but your data stays safe.'
+      })
       return
+    }
+
+    if (tier === 'premium') {
+      const trialAvailable = SUBSCRIPTION_PLANS.premium.trial && !user?.claimedPremiumTrial
+      const alreadyOnTrial = user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'trial'
+
+      if (trialAvailable && !alreadyOnTrial) {
+        upgradeSubscription('premium', {
+          startTrial: true,
+          billingCycle,
+          trialDurationMonths: SUBSCRIPTION_PLANS.premium.trial?.durationMonths
+        })
+        setPlanNotice({
+          tone: 'success',
+          title: 'Premium trial activated',
+          message: 'Enjoy your first month of Premium on us. Unlock unlimited AI reflections, advanced insights, and more for the next 30 days.'
+        })
+        return
+      }
+
+      if (alreadyOnTrial && user?.trialEndsAt) {
+        setPlanNotice({
+          tone: 'info',
+          title: 'Trial already active',
+          message: `Your Premium trial is active until ${new Date(user.trialEndsAt).toLocaleDateString()}. Explore the full experience before it ends.`
+        })
+        return
+      }
     }
     
     // Open payment modal for paid plans
@@ -40,21 +182,61 @@ const Pricing = () => {
 
   const handlePaymentSuccess = () => {
     if (selectedTier) {
-      upgradeSubscription(selectedTier)
-      alert(`Successfully upgraded to ${SUBSCRIPTION_PLANS[selectedTier].name}! 🎉`)
+      const tier = selectedTier
+      upgradeSubscription(tier, { billingCycle })
+      setPlanNotice({
+        tone: 'success',
+        title: 'Plan upgraded',
+        message: `Successfully upgraded to ${SUBSCRIPTION_PLANS[tier].name}. Your new benefits are ready to explore.`
+      })
+      setSelectedTier(null)
     }
   }
 
   const getPrice = (tier: SubscriptionTier) => {
     const plan = SUBSCRIPTION_PLANS[tier]
     if (tier === 'enterprise') return 'Custom'
+
+    if (plan.trial && tier === 'premium') {
+      if (user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'trial' && user?.trialEndsAt) {
+        return 'Trial Active'
+      }
+
+      if (!user || !user.claimedPremiumTrial) {
+        return plan.trial.label || 'Free Trial'
+      }
+    }
+
     const price = billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly
     return billingCycle === 'monthly' ? `$${price}/mo` : `$${price}/yr`
+  }
+
+  const getPriceSubtitle = (tier: SubscriptionTier) => {
+    const plan = SUBSCRIPTION_PLANS[tier]
+    if (tier === 'enterprise') return 'Contact Sales'
+
+    const baseLabel = billingCycle === 'monthly' ? `$${plan.price.monthly}/mo` : `$${plan.price.yearly}/yr`
+
+    if (plan.trial && tier === 'premium') {
+      if (user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'trial' && user?.trialEndsAt) {
+        return `Ends ${new Date(user.trialEndsAt).toLocaleDateString()} · Then ${baseLabel}`
+      }
+
+      if (!user || !user.claimedPremiumTrial) {
+        return `Then ${baseLabel}`
+      }
+    }
+
+    return null
   }
 
   const getSavings = (tier: SubscriptionTier) => {
     const plan = SUBSCRIPTION_PLANS[tier]
     if (tier === 'free' || tier === 'enterprise') return null
+    if (plan.trial && tier === 'premium') {
+      if (!user || !user.claimedPremiumTrial) return null
+  if (user?.subscriptionStatus === 'trial') return null
+    }
     const monthlyCost = plan.price.monthly * 12
     const yearlyCost = plan.price.yearly
     const saved = monthlyCost - yearlyCost
@@ -148,19 +330,22 @@ const Pricing = () => {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`relative bg-white/60 backdrop-blur-sm rounded-3xl border-2 p-8 hover:shadow-xl transition-all ${
-                plan.tier === 'premium'
-                  ? 'border-gradient from-lilac-400 to-golden-400 shadow-lg scale-105'
-                  : 'border-ink-200/30'
-              }`}
-            >
-              {/* Badge/Label at top */}
+          {plans.map((plan, index) => {
+            const isCurrentPlan = isAuthenticated && user?.subscriptionTier === plan.tier
+
+            return (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`relative bg-white/60 backdrop-blur-sm rounded-3xl border-2 p-8 hover:shadow-xl transition-all ${
+                  plan.tier === 'premium'
+                    ? 'border-gradient from-lilac-400 to-golden-400 shadow-lg scale-105'
+                    : 'border-ink-200/30'
+                }`}
+              >
+                {/* Badge/Label at top */}
               {plan.tier === 'free' && (
                 <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full">
                   <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,6 +384,11 @@ const Pricing = () => {
                 <div className="text-4xl font-light text-ink-900 mb-1">
                   {getPrice(plan.tier)}
                 </div>
+                {getPriceSubtitle(plan.tier) && (
+                  <p className="text-sm text-ink-600 mb-1">
+                    {getPriceSubtitle(plan.tier)}
+                  </p>
+                )}
                 {billingCycle === 'yearly' && getSavings(plan.tier) && (
                   <p className="text-sm text-green-600 font-medium">
                     {getSavings(plan.tier)}
@@ -226,21 +416,22 @@ const Pricing = () => {
 
               <Button
                 onClick={() => handleUpgrade(plan.tier)}
-                variant={plan.tier === 'premium' ? 'primary' : 'ghost'}
-                className="w-full"
-                disabled={isAuthenticated && user?.subscriptionTier === plan.tier}
+                variant={plan.tier === 'premium' ? 'primary' : isCurrentPlan ? 'secondary' : 'ghost'}
+                className={`w-full ${isCurrentPlan ? 'opacity-90' : ''}`}
               >
-                {isAuthenticated && user?.subscriptionTier === plan.tier 
-                  ? 'Current Plan' 
-                  : plan.tier === 'free' 
-                    ? 'Start Free' 
-                    : plan.tier === 'enterprise' 
-                      ? 'Contact Sales' 
-                      : 'Get Started'
-                }
+                {isCurrentPlan
+                  ? 'Current Plan'
+                  : plan.tier === 'free'
+                    ? 'Start Free'
+                    : plan.tier === 'enterprise'
+                      ? 'Contact Sales'
+                      : plan.tier === 'premium' && (!user || !user.claimedPremiumTrial) && user?.subscriptionStatus !== 'trial'
+                        ? 'Start 1-Month Free'
+                        : 'Get Started'}
               </Button>
-            </motion.div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
 
         {/* Feature Comparison Table */}
@@ -403,6 +594,14 @@ const Pricing = () => {
           onSuccess={handlePaymentSuccess}
         />
       )}
+
+      <AnimatePresence>
+        {planNotice && (
+          <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+            <PlanNoticeToast notice={planNotice} onClose={() => setPlanNotice(null)} />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

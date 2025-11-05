@@ -14,7 +14,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       monthly: 0,
       yearly: 0,
       currency: 'USD'
-    },
+  },
     features: [
       {
         id: 'basic-journal',
@@ -73,7 +73,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       pluginInstalls: 0,
       customVisualizations: false,
       mediaStorage: 50,
-      backupHistory: 7
+      backupHistory: 7,
+      maxGoals: 3,
+      maxHabits: 5
     }
   },
 
@@ -86,6 +88,11 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       monthly: 9.99,
       yearly: 99,
       currency: 'USD'
+    },
+    trial: {
+      durationMonths: 1,
+      label: '1 Month Free',
+      description: 'Enjoy Premium free for your first month, then $9.99/mo'
     },
     features: [
       {
@@ -180,7 +187,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       pluginInstalls: 5,
       customVisualizations: false,
       mediaStorage: 500,
-      backupHistory: 30
+      backupHistory: 30,
+      maxGoals: 'unlimited',
+      maxHabits: 'unlimited'
     }
   },
 
@@ -257,16 +266,18 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       aiCompanionMessages: 'unlimited',
       emotionalInsights: 'pro',
       journalEntries: 'unlimited',
-      emotionHistory: 'unlimited' as any,
+  emotionHistory: 'unlimited',
       exportData: true,
       advancedAnalytics: true,
-      sharedGoals: 'unlimited' as any,
+      sharedGoals: 'unlimited',
       communityAccess: 'create',
       apiAccess: true,
-      pluginInstalls: 'unlimited' as any,
+      pluginInstalls: 'unlimited',
       customVisualizations: true,
       mediaStorage: 5000,
-      backupHistory: 365
+      backupHistory: 365,
+      maxGoals: 'unlimited',
+      maxHabits: 'unlimited'
     }
   },
 
@@ -343,16 +354,18 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       aiCompanionMessages: 'unlimited',
       emotionalInsights: 'pro',
       journalEntries: 'unlimited',
-      emotionHistory: 'unlimited' as any,
+  emotionHistory: 'unlimited',
       exportData: true,
       advancedAnalytics: true,
-      sharedGoals: 'unlimited' as any,
+      sharedGoals: 'unlimited',
       communityAccess: 'create',
       apiAccess: true,
-      pluginInstalls: 'unlimited' as any,
+      pluginInstalls: 'unlimited',
       customVisualizations: true,
-      mediaStorage: 'unlimited' as any,
-      backupHistory: 'unlimited' as any
+      mediaStorage: 'unlimited',
+      backupHistory: 'unlimited',
+      maxGoals: 'unlimited',
+      maxHabits: 'unlimited'
     }
   }
 }

@@ -6,13 +6,17 @@ import { useAuthStore } from '@/store/useAuthStore'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { signIn, socialSignIn } = useAuthStore()
+  const signIn = useAuthStore((state) => state.signIn)
+  const socialSignIn = useAuthStore((state) => state.socialSignIn)
+  const rememberedEmail = useAuthStore((state) => state.rememberedEmail)
+  const setRememberedEmail = useAuthStore((state) => state.setRememberedEmail)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showSocialModal, setShowSocialModal] = useState<'google' | 'github' | null>(null)
   const [socialEmail, setSocialEmail] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Clear old auth data on mount if exists
   useEffect(() => {
@@ -23,14 +27,23 @@ export default function Login() {
     }
   }, [])
 
+  useEffect(() => {
+    if (rememberedEmail && !email) {
+      setEmail(rememberedEmail)
+      setRememberMe(true)
+    }
+  }, [rememberedEmail, email])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage('')
     try {
-      await signIn(email, password)
+      await signIn(email, password, { remember: rememberMe })
       navigate('/dashboard')
     } catch (error) {
       console.error('Login failed:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -49,6 +62,7 @@ export default function Login() {
     if (!socialEmail) return
     
     setIsLoading(true)
+    setErrorMessage('')
     try {
       const emailName = socialEmail.split('@')[0]
       const displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1).replace(/[._-]/g, ' ')
@@ -58,10 +72,11 @@ export default function Login() {
         name: displayName,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`
       }
-      await socialSignIn(showSocialModal!, userData)
+      await socialSignIn(showSocialModal!, userData, { remember: true })
       navigate('/dashboard')
     } catch (error) {
       console.error('Social sign-in failed:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in with that provider. Please try again.')
     } finally {
       setIsLoading(false)
       setShowSocialModal(null)
@@ -134,7 +149,17 @@ export default function Login() {
                 <input
                   type="checkbox"
                   checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  onChange={(e) => {
+                    const nextChecked = e.target.checked
+                    setRememberMe(nextChecked)
+                    if (nextChecked) {
+                      if (email) {
+                        setRememberedEmail(email)
+                      }
+                    } else {
+                      setRememberedEmail(null)
+                    }
+                  }}
                   className="w-4 h-4 rounded border-ink-300 text-lilac-500 focus:ring-lilac-400"
                 />
                 <span className="ml-2 text-sm text-ink-700">Remember me</span>
@@ -146,6 +171,12 @@ export default function Login() {
                 Forgot password?
               </button>
             </div>
+
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                {errorMessage}
+              </div>
+            )}
 
             {/* Login Button */}
             <Button type="submit" className="w-full" disabled={isLoading}>

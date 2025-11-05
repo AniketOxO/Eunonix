@@ -41,6 +41,32 @@ export function ProfileDropdown() {
     }
   }, [isOpen])
 
+  // Show native cursor while editing profile details so the text caret stays visible
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const body = document.body
+    if (!body) return
+
+    const eventName = 'eunonix-cursor-visibility-change'
+    const notifyCursorChange = () => {
+      document.dispatchEvent(new CustomEvent(eventName))
+    }
+
+    if (showEditModal) {
+      body.classList.add('show-native-cursor')
+      notifyCursorChange()
+    } else {
+      body.classList.remove('show-native-cursor')
+      notifyCursorChange()
+    }
+
+    return () => {
+      body.classList.remove('show-native-cursor')
+      notifyCursorChange()
+    }
+  }, [showEditModal])
+
   const handleLogout = () => {
     signOut()
     navigate('/')

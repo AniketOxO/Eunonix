@@ -15,6 +15,90 @@ import {
 } from '@/types'
 import { safeStorage } from '@/utils/storage'
 import { applyThemeToDocument } from '@/config/themes'
+import { SUBSCRIPTION_PLANS } from '@/config/subscriptionPlans'
+import type { SubscriptionTier } from '@/types/subscription'
+import { useAuthStore } from './useAuthStore'
+
+const PREVIEW_SCOPE = 'preview'
+const STORAGE_NAME = 'eunonix-storage'
+const previewMemory: Record<string, string> = {}
+
+const getStorageScope = () => {
+  const authState = useAuthStore.getState()
+  if (authState.isAuthenticated && authState.activeAccountId) {
+    return `user:${authState.activeAccountId}`
+  }
+  return PREVIEW_SCOPE
+}
+
+const buildScopedKey = (name: string, scope: string) => `${name}::${scope}`
+
+const scopedStorage = {
+  get length() {
+    const scope = getStorageScope()
+    if (scope === PREVIEW_SCOPE) {
+      return Object.keys(previewMemory).length
+    }
+    return safeStorage.length
+  },
+  clear: () => {
+    const scope = getStorageScope()
+    if (scope === PREVIEW_SCOPE) {
+      Object.keys(previewMemory).forEach((key) => {
+        delete previewMemory[key]
+      })
+      return
+    }
+    const key = buildScopedKey(STORAGE_NAME, scope)
+    safeStorage.removeItem(key)
+  },
+  getItem: (name: string) => {
+    const scope = getStorageScope()
+    const scopedKey = buildScopedKey(name, scope)
+    if (scope === PREVIEW_SCOPE) {
+      return previewMemory[scopedKey] ?? null
+    }
+    return safeStorage.getItem(scopedKey)
+  },
+  key: (index: number) => safeStorage.key(index),
+  removeItem: (name: string) => {
+    const scope = getStorageScope()
+    const scopedKey = buildScopedKey(name, scope)
+    if (scope === PREVIEW_SCOPE) {
+      delete previewMemory[scopedKey]
+      return
+    }
+    safeStorage.removeItem(scopedKey)
+  },
+  setItem: (name: string, value: string) => {
+    const scope = getStorageScope()
+    const scopedKey = buildScopedKey(name, scope)
+    if (scope === PREVIEW_SCOPE) {
+      previewMemory[scopedKey] = value
+      return
+    }
+    safeStorage.setItem(scopedKey, value)
+  }
+}
+
+const previewHints = new Set<string>()
+
+const remindSignInIfNeeded = (feature: string) => {
+  const authState = useAuthStore.getState()
+  if (authState.isAuthenticated) {
+    return
+  }
+
+  const key = feature.toLowerCase()
+  if (previewHints.has(key)) {
+    return
+  }
+
+  previewHints.add(key)
+  authState.requireAuth(feature, {
+    message: `You can explore ${feature.toLowerCase()} in preview mode, but sign in to keep your progress.`
+  })
+}
 
 interface AppStore extends UserState {
   setMood: (mood: MoodData) => void
@@ -74,6 +158,45 @@ const emotionToHue: Record<EmotionType, number> = {
   rest: 200,      // Gray-blue
 }
 
+const getActiveSubscriptionTier = () => useAuthStore.getState().user?.subscriptionTier ?? 'free'
+const getActivePlan = () => SUBSCRIPTION_PLANS[getActiveSubscriptionTier()]
+const getPlanLimits = () => getActivePlan().limits
+const getRecommendedUpgradeTier = (): SubscriptionTier => {
+  const tier = getActiveSubscriptionTier()
+  if (tier === 'free') return 'premium'
+  if (tier === 'premium') return 'pro'
+  if (tier === 'pro') return 'enterprise'
+  return 'enterprise'
+}
+
+const enforceGoalLimit = (currentGoalCount: number) => {
+  const limits = getPlanLimits()
+  const maxGoals = limits.maxGoals
+  if (maxGoals !== undefined && maxGoals !== 'unlimited' && currentGoalCount >= maxGoals) {
+    const authStore = useAuthStore.getState()
+    authStore.showPlanLimit('Goals', {
+      message: `The ${getActivePlan().name} plan allows up to ${maxGoals} goals. Upgrade to unlock more.`,
+      upgradeTier: getRecommendedUpgradeTier()
+    })
+    return false
+  }
+  return true
+}
+
+const enforceHabitLimit = (currentHabitCount: number) => {
+  const limits = getPlanLimits()
+  const maxHabits = limits.maxHabits
+  if (maxHabits !== undefined && maxHabits !== 'unlimited' && currentHabitCount >= maxHabits) {
+    const authStore = useAuthStore.getState()
+    authStore.showPlanLimit('Habits', {
+      message: `The ${getActivePlan().name} plan allows up to ${maxHabits} habits. Upgrade to keep tracking more.`,
+      upgradeTier: getRecommendedUpgradeTier()
+    })
+    return false
+  }
+  return true
+}
+
 const getTodayDate = () => new Date().toISOString().split('T')[0]
 
 export const useAppStore = create<AppStore>()(
@@ -95,124 +218,180 @@ export const useAppStore = create<AppStore>()(
   lastSync: null,
 
       setMood: (mood) => {
+        remindSignInIfNeeded('Mood tracking')
         set({ mood })
         get().updateEmotionHue()
       },
 
       // Tasks
-      addTask: (task) => set((state) => ({ 
-        tasks: [...state.tasks, task] 
-      })),
+      addTask: (task) => {
+        remindSignInIfNeeded('Task planning')
+        set((state) => ({ 
+          tasks: [...state.tasks, task] 
+        }))
+      },
 
-      toggleTask: (id) => set((state) => ({
-        tasks: state.tasks.map((task) =>
-          task.id === id ? { ...task, completed: !task.completed } : task
-        ),
-      })),
+      toggleTask: (id) => {
+        remindSignInIfNeeded('Task planning')
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, completed: !task.completed } : task
+          ),
+        }))
+      },
 
-      deleteTask: (id) => set((state) => ({
-        tasks: state.tasks.filter((task) => task.id !== id),
-      })),
+      deleteTask: (id) => {
+        remindSignInIfNeeded('Task planning')
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.id !== id),
+        }))
+      },
 
       // Reflections
-      addReflection: (reflection) => set((state) => ({
-        reflections: [reflection, ...state.reflections],
-      })),
+      addReflection: (reflection) => {
+        remindSignInIfNeeded('Reflections')
+        set((state) => ({
+          reflections: [reflection, ...state.reflections],
+        }))
+      },
 
       // Goals
-      addGoal: (goal) => set((state) => ({
-        goals: [...state.goals, goal],
-      })),
+      addGoal: (goal) => set((state) => {
+        remindSignInIfNeeded('Goals')
+        if (!enforceGoalLimit(state.goals.length)) {
+          return {}
+        }
 
-      updateGoal: (id, updates) => set((state) => ({
-        goals: state.goals.map((goal) =>
-          goal.id === id ? { ...goal, ...updates } : goal
-        ),
-      })),
+        return {
+          goals: [...state.goals, goal],
+        }
+      }),
 
-      deleteGoal: (id) => set((state) => ({
-        goals: state.goals.filter((goal) => goal.id !== id),
-      })),
+      updateGoal: (id, updates) => {
+        remindSignInIfNeeded('Goals')
+        set((state) => ({
+          goals: state.goals.map((goal) =>
+            goal.id === id ? { ...goal, ...updates } : goal
+          ),
+        }))
+      },
+
+      deleteGoal: (id) => {
+        remindSignInIfNeeded('Goals')
+        set((state) => ({
+          goals: state.goals.filter((goal) => goal.id !== id),
+        }))
+      },
 
       // Systems
-      addSystem: (system) => set((state) => ({
-        systems: [...state.systems, system],
-      })),
+      addSystem: (system) => {
+        remindSignInIfNeeded('Systems')
+        set((state) => ({
+          systems: [...state.systems, system],
+        }))
+      },
 
-      updateSystem: (id, updates) => set((state) => ({
-        systems: state.systems.map((system) =>
-          system.id === id ? { ...system, ...updates } : system
-        ),
-      })),
+      updateSystem: (id, updates) => {
+        remindSignInIfNeeded('Systems')
+        set((state) => ({
+          systems: state.systems.map((system) =>
+            system.id === id ? { ...system, ...updates } : system
+          ),
+        }))
+      },
 
-      deleteSystem: (id) => set((state) => ({
-        systems: state.systems.filter((system) => system.id !== id),
-      })),
+      deleteSystem: (id) => {
+        remindSignInIfNeeded('Systems')
+        set((state) => ({
+          systems: state.systems.filter((system) => system.id !== id),
+        }))
+      },
 
       // Habits
-      addHabit: (habit) => set((state) => ({
-        habits: [...state.habits, habit],
-      })),
+      addHabit: (habit) => set((state) => {
+        remindSignInIfNeeded('Habit tracking')
+        if (!enforceHabitLimit(state.habits.length)) {
+          return {}
+        }
 
-      updateHabit: (id, updates) => set((state) => ({
-        habits: state.habits.map((habit) =>
-          habit.id === id ? { ...habit, ...updates } : habit
-        ),
-      })),
+        return {
+          habits: [...state.habits, habit],
+        }
+      }),
 
-      completeHabit: (id, date) => set((state) => ({
-        habits: state.habits.map((habit) => {
-          if (habit.id !== id) return habit
+      updateHabit: (id, updates) => {
+        remindSignInIfNeeded('Habit tracking')
+        set((state) => ({
+          habits: state.habits.map((habit) =>
+            habit.id === id ? { ...habit, ...updates } : habit
+          ),
+        }))
+      },
+
+      completeHabit: (id, date) => {
+        remindSignInIfNeeded('Habit tracking')
+        set((state) => ({
+          habits: state.habits.map((habit) => {
+            if (habit.id !== id) return habit
           
-          const completedDates = [...habit.completedDates]
-          const dateIndex = completedDates.indexOf(date)
+            const completedDates = [...habit.completedDates]
+            const dateIndex = completedDates.indexOf(date)
           
-          if (dateIndex === -1) {
-            // Complete the habit
-            completedDates.push(date)
-            const newStreak = habit.streak + 1
-            return {
-              ...habit,
-              completedDates,
-              streak: newStreak,
-              longestStreak: Math.max(habit.longestStreak, newStreak),
-              lastCompletedAt: new Date(),
+            if (dateIndex === -1) {
+              completedDates.push(date)
+              const newStreak = habit.streak + 1
+              return {
+                ...habit,
+                completedDates,
+                streak: newStreak,
+                longestStreak: Math.max(habit.longestStreak, newStreak),
+                lastCompletedAt: new Date(),
+              }
             }
-          } else {
-            // Uncomplete the habit
+
             completedDates.splice(dateIndex, 1)
             return {
               ...habit,
               completedDates,
               streak: Math.max(0, habit.streak - 1),
             }
-          }
-        }),
-      })),
+          }),
+        }))
+      },
 
-      deleteHabit: (id) => set((state) => ({
-        habits: state.habits.filter((habit) => habit.id !== id),
-      })),
+      deleteHabit: (id) => {
+        remindSignInIfNeeded('Habit tracking')
+        set((state) => ({
+          habits: state.habits.filter((habit) => habit.id !== id),
+        }))
+      },
 
       // Day Planning
-      createDayPlan: (dayPlan) => set((state) => ({
-        dayPlans: {
-          ...state.dayPlans,
-          [dayPlan.date]: dayPlan,
-        },
-      })),
-
-      updateDayPlan: (date, updates) => set((state) => ({
-        dayPlans: {
-          ...state.dayPlans,
-          [date]: {
-            ...state.dayPlans[date],
-            ...updates,
+      createDayPlan: (dayPlan) => {
+        remindSignInIfNeeded('Day planning')
+        set((state) => ({
+          dayPlans: {
+            ...state.dayPlans,
+            [dayPlan.date]: dayPlan,
           },
-        },
-      })),
+        }))
+      },
+
+      updateDayPlan: (date, updates) => {
+        remindSignInIfNeeded('Day planning')
+        set((state) => ({
+          dayPlans: {
+            ...state.dayPlans,
+            [date]: {
+              ...state.dayPlans[date],
+              ...updates,
+            },
+          },
+        }))
+      },
 
       addPriority: (date, priority) => set((state) => {
+        remindSignInIfNeeded('Priorities')
         const dayPlan = state.dayPlans[date]
         if (!dayPlan) return state
 
@@ -228,6 +407,7 @@ export const useAppStore = create<AppStore>()(
       }),
 
       togglePriority: (date, priorityId) => set((state) => {
+        remindSignInIfNeeded('Priorities')
         const dayPlan = state.dayPlans[date]
         if (!dayPlan) return state
 
@@ -245,6 +425,7 @@ export const useAppStore = create<AppStore>()(
       }),
 
       removePriority: (date, priorityId) => set((state) => {
+        remindSignInIfNeeded('Priorities')
         const dayPlan = state.dayPlans[date]
         if (!dayPlan) return state
 
@@ -260,22 +441,28 @@ export const useAppStore = create<AppStore>()(
       }),
 
       // Week Planning
-      createWeekPlan: (weekPlan) => set((state) => ({
-        weekPlans: {
-          ...state.weekPlans,
-          [weekPlan.id]: weekPlan,
-        },
-      })),
-
-      updateWeekPlan: (weekId, updates) => set((state) => ({
-        weekPlans: {
-          ...state.weekPlans,
-          [weekId]: {
-            ...state.weekPlans[weekId],
-            ...updates,
+      createWeekPlan: (weekPlan) => {
+        remindSignInIfNeeded('Weekly planning')
+        set((state) => ({
+          weekPlans: {
+            ...state.weekPlans,
+            [weekPlan.id]: weekPlan,
           },
-        },
-      })),
+        }))
+      },
+
+      updateWeekPlan: (weekId, updates) => {
+        remindSignInIfNeeded('Weekly planning')
+        set((state) => ({
+          weekPlans: {
+            ...state.weekPlans,
+            [weekId]: {
+              ...state.weekPlans[weekId],
+              ...updates,
+            },
+          },
+        }))
+      },
 
       // Utilities
       updateEmotionHue: () => {
@@ -334,16 +521,20 @@ export const useAppStore = create<AppStore>()(
 
       activeThemeId: 'default',
       setActiveTheme: (themeId) => {
+        remindSignInIfNeeded('Theme customization')
         applyThemeToDocument(themeId)
         set({ activeThemeId: themeId })
       },
 
-  setLastSync: (date: Date | null) => set({ lastSync: date }),
+  setLastSync: (date: Date | null) => {
+    remindSignInIfNeeded('Syncing')
+    set({ lastSync: date })
+  },
     }),
     {
       name: 'eunonix-storage',
       version: 1,
-      storage: createJSONStorage(() => safeStorage),
+  storage: createJSONStorage(() => scopedStorage),
       onRehydrateStorage: () => (state) => {
         if (!state) {
           return
@@ -367,3 +558,25 @@ export const useAppStore = create<AppStore>()(
     }
   )
 )
+
+useAuthStore.subscribe((state, previousState) => {
+  const prevScope = previousState && previousState.isAuthenticated && previousState.activeAccountId
+    ? `user:${previousState.activeAccountId}`
+    : PREVIEW_SCOPE
+  const nextScope = state.isAuthenticated && state.activeAccountId
+    ? `user:${state.activeAccountId}`
+    : PREVIEW_SCOPE
+
+  if (nextScope === prevScope) {
+    return
+  }
+
+  if (!state.isAuthenticated) {
+    Object.keys(previewMemory).forEach((key) => delete previewMemory[key])
+    previewHints.clear()
+  }
+
+  if (typeof useAppStore.persist?.rehydrate === 'function') {
+    useAppStore.persist.rehydrate()
+  }
+})

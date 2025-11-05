@@ -7,13 +7,13 @@
     --emotion-hue: 210; /* Default: calm blue */
     --emotion-saturation: 60%;
     --emotion-lightness: 95%;
-    --eunonix-background: linear-gradient(160deg, #f8f5ff 0%, #ffffff 50%, #f3f6ff 100%);
-    --eunonix-card: rgba(255, 255, 255, 0.6);
-    --eunonix-accent: #5b4bb7;
-    --eunonix-accent-gradient: linear-gradient(135deg, #556d8f 0%, #a082c4 100%);
-    --eunonix-text: #1f2845;
-    --eunonix-neutral: #e3e8f7;
-    --eunonix-glow: rgba(90, 75, 183, 0.25);
+    --lifeos-background: linear-gradient(160deg, #f8f5ff 0%, #ffffff 50%, #f3f6ff 100%);
+    --lifeos-card: rgba(255, 255, 255, 0.6);
+    --lifeos-accent: #5b4bb7;
+    --lifeos-accent-gradient: linear-gradient(135deg, #556d8f 0%, #a082c4 100%);
+    --lifeos-text: #1f2845;
+    --lifeos-neutral: #e3e8f7;
+    --lifeos-glow: rgba(90, 75, 183, 0.25);
   }
 
   html {
@@ -26,43 +26,54 @@
     transition: background-color 1.5s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background: var(--lifeos-background);
+    color: var(--lifeos-text);
+  }
+
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
     cursor: none !important;
-    background: var(--eunonix-background);
-    color: var(--eunonix-text);
   }
 
   * {
     -webkit-tap-highlight-color: transparent;
-    cursor: none !important;
   }
 
-  /* Force show cursor on interactive elements */
-  input, textarea, select,
-  button, a, label[for],
-  input:hover, textarea:hover, select:hover,
-  input:focus, textarea:focus, select:focus {
+  /* Force show cursor on interactive elements when custom cursor is disabled */
+  body:not(.custom-cursor-active) input,
+  body:not(.custom-cursor-active) textarea,
+  body:not(.custom-cursor-active) select,
+  body:not(.custom-cursor-active) button,
+  body:not(.custom-cursor-active) a,
+  body:not(.custom-cursor-active) label[for],
+  body:not(.custom-cursor-active) input:hover,
+  body:not(.custom-cursor-active) textarea:hover,
+  body:not(.custom-cursor-active) select:hover,
+  body:not(.custom-cursor-active) input:focus,
+  body:not(.custom-cursor-active) textarea:focus,
+  body:not(.custom-cursor-active) select:focus {
     cursor: auto !important;
   }
-  
-  /* Text cursor for text inputs */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="search"],
-  input[type="url"],
-  input[type="tel"],
-  textarea {
+
+  /* Text cursor for text inputs when custom cursor is disabled */
+  body:not(.custom-cursor-active) input[type="text"],
+  body:not(.custom-cursor-active) input[type="email"],
+  body:not(.custom-cursor-active) input[type="password"],
+  body:not(.custom-cursor-active) input[type="search"],
+  body:not(.custom-cursor-active) input[type="url"],
+  body:not(.custom-cursor-active) input[type="tel"],
+  body:not(.custom-cursor-active) textarea {
     cursor: text !important;
   }
-  
-  /* Pointer cursor for clickable elements */
-  button, 
-  a,
-  label[for],
-  input[type="file"],
-  input[type="submit"],
-  input[type="button"],
-  [role="button"] {
+
+  /* Pointer cursor for clickable elements when custom cursor is disabled */
+  body:not(.custom-cursor-active) button, 
+  body:not(.custom-cursor-active) a,
+  body:not(.custom-cursor-active) label[for],
+  body:not(.custom-cursor-active) input[type="file"],
+  body:not(.custom-cursor-active) input[type="submit"],
+  body:not(.custom-cursor-active) input[type="button"],
+  body:not(.custom-cursor-active) [role="button"] {
     cursor: pointer !important;
   }
 
@@ -74,29 +85,12 @@
   button, a, input, select, textarea {
     @apply touch-manipulation;
   }
-  
-  body.show-native-cursor,
-  body.show-native-cursor * {
-    cursor: auto !important;
-  }
-
-  /* Remove default number input spinners so custom controls show */
-  input[type="number"] {
-    appearance: textfield;
-    -moz-appearance: textfield;
-  }
-  
-  input[type="number"]::-webkit-outer-spin-button,
-  input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
 }
 
 @layer components {
   .glass-card {
     @apply backdrop-blur-md rounded-2xl sm:rounded-3xl;
-    background: var(--eunonix-card);
+    background: var(--lifeos-card);
     border: 1px solid rgba(255, 255, 255, 0.6);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
   }
@@ -121,7 +115,7 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: var(--eunonix-accent-gradient);
+    background-image: var(--lifeos-accent-gradient);
   }
 
   .emotion-bg {

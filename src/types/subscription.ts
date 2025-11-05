@@ -17,6 +17,7 @@ export interface SubscriptionPlan {
   features: PlanFeature[]
   limits: PlanLimits
   badge?: string
+  trial?: PlanTrial
 }
 
 export interface PlanFeature {
@@ -35,22 +36,32 @@ export interface PlanLimits {
   
   // Data & Analytics
   journalEntries: number | 'unlimited'
-  emotionHistory: number // days
+  emotionHistory: number | 'unlimited'
   exportData: boolean
   advancedAnalytics: boolean
   
   // Collaboration
-  sharedGoals: number
+  sharedGoals: number | 'unlimited'
   communityAccess: 'view' | 'participate' | 'create'
   
   // Platform
   apiAccess: boolean
-  pluginInstalls: number
+  pluginInstalls: number | 'unlimited'
   customVisualizations: boolean
   
   // Storage
-  mediaStorage: number // MB
-  backupHistory: number // days
+  mediaStorage: number | 'unlimited'
+  backupHistory: number | 'unlimited'
+
+  // App Objects
+  maxGoals?: number | 'unlimited'
+  maxHabits?: number | 'unlimited'
+}
+
+export interface PlanTrial {
+  durationMonths: number
+  label?: string
+  description?: string
 }
 
 export interface UserSubscription {
@@ -76,7 +87,7 @@ export interface UsageMetrics {
   journalEntriesCount: number
   storageUsed: number // MB
   apiCallsUsed: number
-  lastUpdated: Date
+  lastUpdated: string | null
 }
 
 // Marketplace Types
