@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test:ai-emotions": "ts-node ./scripts/run-ai-emotion-tests.ts",
+    "test": "vitest"
   },
   "dependencies": {
     "framer-motion": "^10.16.4",
@@ -29,6 +31,14 @@
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.2.2",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0",
+    "ts-node": "^10.9.1",
+    "@types/node": "^20.5.1"
+  }
+  ,
+  "vitest": {
+    "globals": false,
+    "environment": "node"
   }
 }

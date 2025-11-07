@@ -5,12 +5,19 @@ import { useAppStore } from '@/store/useAppStore'
 import { Button } from '@/components/Button'
 import { readJSON, writeJSON } from '@/utils/storage'
 import { useAuthStore } from '@/store/useAuthStore'
+import detectEmotionResponse, { detectEmotionLabel, detectEmotion } from '@/utils/detectEmotionResponse'
+import runDetectorBackfill from '@/utils/migrations/detectBackfill'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
-  timestamp: Date
+  // allow timestamp to be Date or ISO string (rehydrated messages may be strings)
+  timestamp: Date | string
+  detection?: {
+    label?: string | null
+    matched?: { category?: string; trigger?: string } | null
+  }
 }
 
 interface TrainingData {
@@ -23,6 +30,7 @@ interface TrainingData {
   conversationHistory: {
     totalMessages: number
     frequentTopics: Record<string, number>
+    emotionCounts?: Record<string, number>
     successfulResponses: string[]
   }
   personalContext: {
@@ -83,6 +91,7 @@ const personalities: Record<AIPersonality, { name: string; description: string; 
   },
 }
 
+
 const AICompanion = () => {
   const navigate = useNavigate()
   const { habits, goals } = useAppStore()
@@ -108,6 +117,7 @@ const AICompanion = () => {
     conversationHistory: {
       totalMessages: 0,
       frequentTopics: {},
+      emotionCounts: {},
       successfulResponses: []
     },
     personalContext: {
@@ -116,6 +126,9 @@ const AICompanion = () => {
       achievements: []
     }
   })
+
+  // Migration/versioning for detector backfill
+  const DETECTOR_MIGRATION_VERSION = 1
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [aiLimitNotice, setAiLimitNotice] = useState<string | null>(null)
@@ -129,11 +142,51 @@ const AICompanion = () => {
                         'work', 'health', 'career', 'productivity', 'mindfulness', 'growth', 'anxiety',
                         'confidence', 'relationship', 'finance', 'creativity', 'learning', 'purpose',
                         'happiness', 'discipline', 'focus', 'energy', 'balance'],
-      commonGreetings: ['hi', 'hello', 'hey', 'good morning', 'good evening', 'howdy', "what's up"],
+      // Generate 1000 greeting variants
+      commonGreetings: (() => {
+        const bases: string[] = ['hi', 'hello', 'hey', 'good morning', 'good evening', 'good afternoon', 'howdy', 'sup', "what's up", 'greetings', 'yo', 'hola', 'bonjour']
+        const variants: string[] = []
+        bases.forEach((base: string) => {
+          variants.push(base)
+          for (let i = 2; i <= 10; i++) {
+            variants.push(base + '!'.repeat(i))
+            variants.push(base + '?'.repeat(i))
+            variants.push(base + '.'.repeat(i))
+            variants.push(base + base.repeat(i))
+            variants.push(base + ' ' + base)
+            variants.push(base.toUpperCase())
+            variants.push(base[0].toUpperCase() + base.slice(1))
+            variants.push(base + 'y'.repeat(i))
+            variants.push(base + 'o'.repeat(i))
+            variants.push(base + 'i'.repeat(i))
+          }
+        })
+        // Add some emoji variants
+        const emojis: string[] = ['👋','😊','😃','🙌','✌️','🤗']
+        emojis.forEach((emoji: string) => {
+          bases.forEach((base: string) => {
+            variants.push(base + ' ' + emoji)
+            variants.push(emoji + ' ' + base)
+          })
+        })
+        // Limit to 1000 unique variants
+        return Array.from(new Set(variants)).slice(0, 1000)
+      })(),
       emotionalTone: 'supportive'
     },
     conversationHistory: {
       totalMessages: 500,
+      emotionCounts: {
+        sad: 32,
+        stress: 28,
+        anxiety: 40,
+        angry: 10,
+          confused: 12,
+        overthinking: 18,
+        happy: 19
+          ,hopeless: 0,
+          loneliness: 0
+      },
       frequentTopics: {
         'habit': 45,
         'goal': 52,
@@ -234,7 +287,11 @@ const AICompanion = () => {
     } | null>('eunonix-companion', null)
     
     if (saved && Array.isArray(saved.messages)) {
-      setMessages(saved.messages.map((m) => ({ ...m, timestamp: new Date(m.timestamp) })))
+      // Rehydrate timestamps quickly and set UI state. Backfill runs asynchronously
+      const rehydrated: Message[] = saved.messages.map((m) => ({ ...m, timestamp: new Date(m.timestamp) }))
+
+      // Set initial UI state synchronously (fast) so the app renders immediately
+      setMessages(rehydrated)
       setPersonality(saved.personality || 'friend')
       if (saved.trainingData) {
         setTrainingData(saved.trainingData)
@@ -242,6 +299,21 @@ const AICompanion = () => {
         // Apply pre-trained data if user doesn't have training history
         setTrainingData(preTrainedData)
       }
+
+      // Migration guard: only perform backfill once per migration version
+      const appliedVersion = (saved as any)._detectorMigrationVersion || 0
+      if (appliedVersion >= DETECTOR_MIGRATION_VERSION) {
+        // already applied
+        return
+      }
+
+      // Run backfill asynchronously using shared helper
+      runDetectorBackfill(saved, habits, goals, personality, DETECTOR_MIGRATION_VERSION)
+        .then((result) => {
+          setMessages(result.messages)
+          setTrainingData(result.trainingData)
+        })
+        .catch(err => console.error('Detector migration failed', err))
     } else {
       // Welcome message - AI is already pre-trained!
       setMessages([{
@@ -331,6 +403,37 @@ const AICompanion = () => {
           }
         }
       }
+
+      // Centralized emotion label detection (single source of truth)
+      const detected = detectEmotionLabel(userMessage)
+      if (detected) {
+        const labelMap: Record<string, string> = {
+          anger: 'angry',
+          confusion: 'confused',
+          lonely: 'lonely',
+          sad: 'sad',
+          financial: 'financial',
+          career: 'career',
+          stress: 'stress',
+          anxiety: 'anxiety',
+          overthinking: 'overthinking',
+          happy: 'happy',
+          hopeless: 'hopeless',
+          motivation: 'motivation',
+          fun: 'fun',
+          calm: 'calm',
+          // New interpersonal / situational labels added for analytics
+          breakup: 'breakup',
+          family: 'family',
+          friendship: 'friendship',
+          selfworth: 'selfworth',
+          study: 'study',
+          social_anxiety: 'social_anxiety'
+        }
+        const key = labelMap[detected] || detected
+        updated.conversationHistory.emotionCounts = updated.conversationHistory.emotionCounts || {}
+        updated.conversationHistory.emotionCounts[key] = (updated.conversationHistory.emotionCounts[key] || 0) + 1
+      }
       
       return updated
     })
@@ -338,30 +441,27 @@ const AICompanion = () => {
 
   // Check if message is a greeting
   const isGreeting = (message: string): boolean => {
+    // List of base greetings
     const greetings = [
       'hi', 'hello', 'hey', 'good morning', 'good evening', 'good afternoon',
       'howdy', 'sup', "what's up", 'greetings', 'yo', 'hola', 'bonjour'
     ]
-    
-    // Normalize the message: remove extra repeated characters (hiii -> hi, helloooo -> hello)
-    const normalizeRepeats = (str: string) => {
-      return str.replace(/(.)\1{2,}/g, '$1$1') // Replace 3+ repeated chars with 2
-    }
-    
+
+    // Normalize: collapse repeated letters (hiiii -> hi, helloooo -> hello)
+    const normalize = (str: string) => str
+      .toLowerCase()
+      .replace(/([a-z])\1{1,}/g, '$1') // collapse all repeated letters to one
+      .replace(/[^a-z ]/g, '') // remove punctuation
+      .trim()
+
     const lowerMsg = message.toLowerCase().trim()
-    const normalized = normalizeRepeats(lowerMsg)
-    
-    // Check if it's just a greeting (possibly with punctuation or repeated letters)
+    const normalized = normalize(lowerMsg)
+
+    // Check if normalized message starts with a greeting
     return greetings.some(g => {
-      const regex = new RegExp(`^${g}[!.?]*$`, 'i')
-      const normalizedGreeting = normalizeRepeats(g)
-      
-      // Check exact match, normalized match, or just the greeting word
-      return regex.test(lowerMsg) || 
-             regex.test(normalized) || 
-             lowerMsg === g || 
-             normalized === normalizedGreeting ||
-             lowerMsg.replace(/[!.?\s]+/g, '') === g
+      const base = normalize(g)
+      // Match if normalized message starts with base greeting
+      return normalized.startsWith(base)
     })
   }
 
@@ -435,65 +535,221 @@ const AICompanion = () => {
   }
 
   const generateAIResponse = (userMessage: string): string => {
+    // Context setup - available to all handlers
+    const lowerMessage = userMessage.toLowerCase();
+    const totalHabits = habits.length;
+    const avgStreak = habits.length > 0 ? Math.round(habits.reduce((sum, h) => sum + h.streak, 0) / habits.length) : 0;
+    const totalGoals = goals.length;
+    const knownChallenges = trainingData.personalContext.challenges;
+    const knownGoals = trainingData.personalContext.goals;
+    const topTopics = Object.entries(trainingData.conversationHistory.frequentTopics)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([topic]) => topic);
+    
+    // Give priority to explicit emotion detection: if a clear emotion label is present,
+    // delegate to the centralized detector so emotional content overrides simple greetings.
+    const detectedLabel = detectEmotionLabel(userMessage)
+    if (detectedLabel) {
+      const delegated = detectEmotionResponse(userMessage, { trainingData, habits, goals, messages, personality, userName: user?.name })
+      if (delegated && delegated.trim().length > 0) return delegated
+    }
+
+    // If there was no clear emotion, handle greeting variants locally first
+    if (isGreeting(userMessage)) {
+      return generateGreetingResponse(userMessage)
+    }
+
+    // Finally, delegate to the centralized emotion detector for any other quick matches
+  const delegated = detectEmotionResponse(userMessage, { trainingData, habits, goals, messages, personality, userName: user?.name })
+    if (delegated && delegated.trim().length > 0) return delegated
+
+    // 🔹 EMOTION 6: Overthinking - advanced detection and response
+    const overthinkingTriggers = [
+      'overthinking', 'thinking too much', 'can’t stop thinking', 'cannot stop thinking', 'mind won’t stop', 'mind cannot stop', 'thoughts racing', 'thoughts won’t stop', 'thoughts cannot stop', 'looping thoughts', 'thoughts keep looping', 'can’t switch off', 'cannot switch off', 'ruminating', 'obsessing', 'can’t let go', 'cannot let go', 'stuck in my head', 'head won’t stop', 'head cannot stop'
+    ];
+    if (overthinkingTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "I hear your mind running fast.",
+        "Let’s pause for a second…",
+        "What thought keeps looping the most?"
+      ].join(' ');
+    }
+    // 🔹 EMOTION 5: Confusion - advanced detection and response
+    const confusionTriggers = [
+      'confused', 'confusion', 'unclear', 'don’t get it', 'do not get it', 'don’t understand', 'do not understand', 'lost', 'not sure', 'mixed up', 'can’t figure out', 'cannot figure out', 'don’t know what to do', 'do not know what to do', 'don’t see it', 'do not see it', 'not making sense', 'doesn’t make sense', 'does not make sense'
+    ];
+    if (confusionTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "It's okay to not have clarity right away.",
+        "Let’s untangle it slowly.",
+        "What part of this feels unclear?"
+      ].join(' ');
+    }
+    // 🔹 EMOTION 4: Anger - advanced detection and response
+    const angerTriggers = [
+      'angry', 'anger', 'mad', 'furious', 'irritated', 'annoyed', 'pissed', 'rage', 'crossed a boundary', 'triggered', 'lost my temper', 'lost temper', 'snapped', 'fuming', 'resentment', 'upset', 'boiling', 'exploded', 'blew up', 'frustrated', 'frustration'
+    ];
+    if (angerTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "Your feelings are valid — something has clearly crossed a boundary.",
+        "Tell me what triggered it, we’ll unpack it together."
+      ].join(' ');
+    }
+    // 🔹 EMOTION 3: Anxiety - advanced detection and response
+    const anxietyTriggers = [
+      'anxious', 'anxiety', 'worried', 'panic', 'nervous', 'uneasy', 'can’t relax', 'can not relax', 'racing thoughts', 'mind won’t stop', 'mind cannot stop', 'fear', 'afraid', 'scared', 'worry', 'worries', 'overthinking', 'can’t sleep', 'can not sleep'
+    ];
+    if (anxietyTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "You're safe here. I’m with you.",
+        "Let’s slow your thoughts down one step at a time.",
+        "What’s the first thing your mind jumped to?"
+      ].join(' ');
+    }
+    // 🔹 EMOTION 2: Stress - advanced detection and response
+    const stressTriggers = [
+      'stressed', 'stress', 'overwhelmed', 'too much', 'can’t handle', 'can not handle', 'burned out', 'burnt out', 'pressure', 'anxious about work', 'work is too much', 'life is too much', 'so much to do', 'mind is racing', 'can’t focus', 'can not focus'
+    ];
+    if (stressTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "Take a slow breath with me.",
+        "I can feel there’s a lot on your mind.",
+        "Let’s break it down gently — what part is hitting you the hardest?"
+      ].join(' ');
+    }
+    // 🔹 EMOTION 1: Sadness - advanced detection and response
+    const sadnessTriggers = [
+      'i feel down', 'low', 'heavy', 'not okay', 'tired emotionally', 'feeling down', 'emotionally tired', 'feeling low', 'not feeling okay', 'sad', 'depressed'
+    ];
+    if (sadnessTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "I’m right here with you.",
+        "That sounds really heavy… and it makes sense you’d feel this way.",
+        "You don’t have to handle it alone.",
+        "What do you think is affecting you the most right now?"
+      ].join(' ');
+    }
+
+    // 🔹 EMOTION 9: Hopelessness - advanced detection and response
+    const hopelessTriggers = ['hopeless', 'hopelessness', 'feel hopeless', 'everything is falling apart']
+    if (hopelessTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "I’m here with you.",
+        "You’re not alone — even if it feels like everything is falling apart.",
+        "Let’s take this one small step at a time.",
+        "What hurts the most?"
+      ].join(' ')
+    }
+    // Respond to 'what about you' or similar reciprocal questions
+    // 🔹 EMOTION 7: Happiness - advanced detection and response
+    const happinessTriggers = [
+      'happy', 'happiness', 'great', 'awesome', 'amazing', 'joy', 'glad', 'ecstatic', 'elated', 'good news', 'excited', 'thrilled', 'this energy', 'made my day', 'made today', 'today was great'
+    ];
+    if (happinessTriggers.some(trigger => lowerMessage.includes(trigger))) {
+      return [
+        "This energy feels amazing!",
+        "I’m so happy for you — tell me everything, what made today shine?"
+      ].join(' ');
+    }
+
+    if (lowerMessage.includes('what about you') || lowerMessage.includes('how are you') || lowerMessage.includes('how are you doing') || lowerMessage.includes('how do you feel')) {
+      const aiReplies = [
+        "I'm doing great, thanks for asking! How can I help you today?",
+        "I'm here and ready to support you! What's on your mind?",
+        "I'm feeling positive and focused. Let me know how I can assist you!",
+        "I'm always happy to chat and help you grow. What's next for us?"
+      ];
+      return aiReplies[Math.floor(Math.random() * aiReplies.length)];
+    }
+    
+
+    // 1. Detect unclear/misspelled/confusing messages
+    const unclearWords = ['confued', 'connfused', 'confusd', 'confuseed', 'confusde', 'confusd', 'confued', 'confud', 'confus', 'confued?'];
+    const unclearDetected = unclearWords.some(w => lowerMessage.includes(w));
+    if (unclearDetected) {
+      return "Did you mean 'confused'? It's okay to feel lost sometimes. Here's a technique: Write down what you do know, then list what you don't. Sometimes clarity comes from seeing it on paper. Remember, confusion is the first step to understanding!";
+    }
+
+    // 2. Detect common emotional states and respond contextually with motivation and a technique
+    const emotionMap: { [key: string]: {motivation: string[], technique: string[]} } = {
+      sad: {
+        motivation: [
+          "Sadness is a sign you care. It's okay to feel it. Every storm passes.",
+          "Even the darkest clouds can't block the sun forever. You're stronger than you think."
+        ],
+        technique: [
+          "Try the '3 Good Things' exercise: Write down three things that went well today, no matter how small.",
+          "Take a slow, deep breath and name one thing you're grateful for right now."
+        ]
+      },
+      angry: {
+        motivation: [
+          "Anger means something matters to you. Use it as fuel for positive change.",
+          "It's okay to feel angry. What you do with it is what counts."
+        ],
+        technique: [
+          "Try the 'Pause and Breathe' method: Take 5 deep breaths before reacting.",
+          "Write down what's making you angry, then tear up the paper. It's a symbolic release."
+        ]
+      },
+      confused: {
+        motivation: [
+          "Confusion is the beginning of wisdom. Every answer starts with a question.",
+          "It's normal to feel confused when you're growing. You're on the right path."
+        ],
+        technique: [
+          "Try mind mapping: Draw your problem in the center and branch out possible causes or solutions.",
+          "Ask yourself: What is one thing I DO understand about this situation? Start there."
+        ]
+      },
+      anxious: {
+        motivation: [
+          "Anxiety is your mind trying to protect you. You can handle this.",
+          "You are safe in this moment. Breathe and let it pass."
+        ],
+        technique: [
+          "Try the '5-4-3-2-1' grounding exercise: Name 5 things you see, 4 you feel, 3 you hear, 2 you smell, 1 you taste.",
+          "Take 3 slow, deep breaths and focus only on the exhale."
+        ]
+      },
+      happy: {
+        motivation: [
+          "Happiness is contagious! Spread it around.",
+          "Enjoy the moment. You deserve it."
+        ],
+        technique: [
+          "Share your happiness with someone else. Compliment or thank them.",
+          "Write down what made you happy today and revisit it when you need a boost."
+        ]
+      },
+      tired: {
+        motivation: [
+          "Rest is productive. Your body and mind need it.",
+          "It's okay to pause. Recharge and come back stronger."
+        ],
+        technique: [
+          "Try a 5-minute body scan: Close your eyes and notice each part of your body from head to toe.",
+          "Drink a glass of water and stretch for 2 minutes."
+        ]
+      }
+    }
+
+    for (const emotion in emotionMap) {
+      if (userMessage.toLowerCase().includes(emotion)) {
+        const { motivation, technique } = emotionMap[emotion]
+        return `${motivation[Math.floor(Math.random() * motivation.length)]}\nHere's a technique: ${technique[Math.floor(Math.random() * technique.length)]}`
+      }
+    }
+
     // Check if it's just a greeting
     if (isGreeting(userMessage)) {
       return generateGreetingResponse(userMessage)
     }
-    
-    const lowerMessage = userMessage.toLowerCase()
-    
-    // Analyze user context
-    const totalHabits = habits.length
-    const avgStreak = habits.length > 0 
-      ? Math.round(habits.reduce((sum, h) => sum + h.streak, 0) / habits.length) 
-      : 0
-    const totalGoals = goals.length
 
-    // Use training data for personalized responses
-    const knownChallenges = trainingData.personalContext.challenges
-    const knownGoals = trainingData.personalContext.goals
-    const topTopics = Object.entries(trainingData.conversationHistory.frequentTopics)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([topic]) => topic)
-
-    // CONTEXT AWARENESS - Check last AI message to avoid repetition
-    const lastAIMessage = messages.length > 0 ? messages[messages.length - 1] : null
-    const lastAIContent = lastAIMessage?.role === 'assistant' ? lastAIMessage.content.toLowerCase() : ''
-    
-    // If AI just asked about "3 things you can see" and user answered, acknowledge it
-    if (lastAIContent.includes('3 things you can see') || lastAIContent.includes('name 3 things')) {
-      if (lowerMessage.length < 50 && !lowerMessage.includes('?')) {
-        // User gave a short answer (likely naming things)
-        return "Beautiful grounding exercise. Notice how focusing on the present calms the mind? That's the power of mindfulness. How are you feeling now compared to a moment ago?"
-      }
-    }
-
-    // If AI asked "how are you feeling about that aspect" and user says negative (not great, bad, awful, terrible)
-    if (lastAIContent.includes('how are you feeling about that aspect') || lastAIContent.includes('how are you feeling about')) {
-      if (lowerMessage.includes('not great') || lowerMessage.includes('not good') || lowerMessage.includes('bad') || 
-          lowerMessage.includes('awful') || lowerMessage.includes('terrible') || lowerMessage.includes('struggling')) {
-        return personality === 'friend'
-          ? "I hear you. It's tough when something that matters to you isn't going well. Want to tell me more about what's making it hard? Sometimes just talking through it helps."
-          : "That's honest, and I appreciate you sharing that. When something isn't going well, we have choices: we can change our approach, change our expectations, or sometimes we need to change our relationship with it. What feels right to you?"
-      }
-      if (lowerMessage.includes('good') || lowerMessage.includes('better') || lowerMessage.includes('okay') || lowerMessage.includes('fine')) {
-        return "I'm glad to hear that. Even 'okay' is progress when we're working through challenges. What's one thing that's been helping you with this?"
-      }
-    }
-
-    // If AI asked a question and user gave a short response, acknowledge it before moving on
-    if (lastAIContent.includes('?') && lowerMessage.length < 30 && !lowerMessage.includes('?')) {
-      // Don't ask the same type of question again immediately
-      const responses = [
-        `I hear you on that. ${lowerMessage.includes('nothing') ? 'Sometimes we need to start from zero, and that\'s okay.' : 'That\'s valuable insight.'} What would be most helpful for you to focus on right now?`,
-        `Thanks for sharing that. ${lowerMessage.length < 10 ? 'Even short answers tell me something.' : 'I\'m getting a sense of where you\'re at.'} What\'s one small win you could create for yourself today?`,
-        `Got it. ${lowerMessage.includes('don\'t know') ? 'Not knowing is the beginning of wisdom - it means you\'re being honest with yourself.' : 'That helps me understand.'} What support do you need right now?`
-      ]
-      // Avoid repeating if this would be redundant
-      if (!lastAIContent.includes('what support') && !lastAIContent.includes('most helpful')) {
-        return responses[Math.floor(Math.random() * responses.length)]
-      }
+    // Fallback: If nothing matches, give a motivational message and a general technique
+    if (userMessage.trim().length > 0) {
+      return `I'm here for you, even if I don't fully understand. Every challenge is a chance to grow.\nHere's a technique: Take a deep breath, write down your thoughts, and see if anything becomes clearer. You got this!`
     }
 
     // Advanced contextual understanding - EXTENSIVE KNOWLEDGE
@@ -582,8 +838,12 @@ const AICompanion = () => {
       return "Gratitude rewires the brain for positivity. Research shows grateful people are measurably happier, healthier, and more resilient. What are 3 small things you're grateful for right now? Even tiny things count."
     }
 
-    if (lowerMessage.includes('lonely') || lowerMessage.includes('alone')) {
-      return "Loneliness is real and painful. But being alone and being lonely are different - one is circumstance, one is feeling. How can we shift that feeling for you? Sometimes it's about quality connections, not quantity."
+    if (lowerMessage.includes('lonely') || lowerMessage.includes('alone') || lowerMessage.includes('feeling alone')) {
+      return [
+        "I’m right here, really.",
+        "You deserve connection and warmth.",
+        "What made you feel alone today?"
+      ].join(' ')
     }
 
     if (lowerMessage.includes('purpose') || lowerMessage.includes('direction')) {
@@ -815,16 +1075,22 @@ const AICompanion = () => {
     const thinkingTime = isGreeting(userMessageContent) ? 800 : 1500
     
     setTimeout(() => {
+      // compute detection (label + matched trigger) and persist with the assistant message
+  const detection = detectEmotion(userMessageContent, { trainingData, habits, goals, messages, personality, userName: user?.name })
       const aiResponseContent = generateAIResponse(userMessageContent)
       const aiResponse: Message = {
         id: `msg-${Date.now()}-ai`,
         role: 'assistant',
         content: aiResponseContent,
         timestamp: new Date(),
+        detection: {
+          label: detection.label ?? null,
+          matched: detection.matched ?? null
+        }
       }
       setMessages(prev => [...prev, aiResponse])
       setIsThinking(false)
-      
+
       // Auto-train from this conversation
       trainFromMessage(userMessageContent, aiResponseContent)
     }, thinkingTime)
@@ -1033,8 +1299,39 @@ const AICompanion = () => {
                   }`}
                 >
                   <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                  {/* Show detected label and matched trigger for assistant replies (based on previous user message) */}
+                  {message.role === 'assistant' && (() => {
+                    // Prefer persisted detection metadata on the assistant message. Fall back to computing if not present.
+                    const persisted = message.detection
+                    if (persisted && (persisted.label || (persisted.matched && persisted.matched.trigger))) {
+                      return (
+                        <div className="text-xs mt-2 text-ink-500 italic">
+                          {persisted.label && <span className="mr-2">Label: <strong>{persisted.label}</strong></span>}
+                          {persisted.matched && persisted.matched.trigger && (
+                            <span>Trigger: <strong>{persisted.matched.trigger}</strong></span>
+                          )}
+                        </div>
+                      )
+                    }
+
+                    const prev = messages[index - 1]
+                    if (prev && prev.role === 'user') {
+                      const detected = detectEmotion(prev.content)
+                      if (detected && (detected.label || (detected.matched && detected.matched.trigger))) {
+                        return (
+                          <div className="text-xs mt-2 text-ink-500 italic">
+                            {detected.label && <span className="mr-2">Label: <strong>{detected.label}</strong></span>}
+                            {detected.matched && detected.matched.trigger && (
+                              <span>Trigger: <strong>{detected.matched.trigger}</strong></span>
+                            )}
+                          </div>
+                        )
+                      }
+                    }
+                    return null
+                  })()}
                   <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-white/70' : 'text-ink-500'}`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               </motion.div>
