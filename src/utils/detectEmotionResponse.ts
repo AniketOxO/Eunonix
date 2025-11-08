@@ -53,6 +53,83 @@ export const DIRECT_MAP: Array<{triggers: string[], reply: string}> = [
   { triggers: ['what’s going on', "whats going on", 'what is going on'], reply: "Just waiting to hear from you. Tell me something." }
 ]
 
+// Helper: detect if a positive word appears near a negative modifier.
+// This is used to implement the Advanced Negative Override: if a positive token
+// (good/great/fine/okay/alright/nice/awesome/etc.) appears but a negative
+// modifier (not, don't, never, isn't, ain't, no, etc.) appears within a small
+// window before or after it, treat the whole message as negative.
+export const hasNearbyNegativeModifier = (userMessage: string): boolean => {
+  const lower = userMessage.toLowerCase()
+  // positive tokens we care about for this rule
+  const positives = ['good', 'great', 'fine', 'okay', 'ok', 'alright', 'nice', 'happy', 'awesome', 'amazing']
+  // negative markers / modifiers (include common contractions and multi-word phrases)
+  // keep as plain strings and apply word-boundary matching later
+  const negativePatterns = [
+    'not',
+    'no',
+    'never',
+    "don't",
+    'dont',
+    "can't",
+    "can't",
+    "doesn't",
+    'doesnt',
+    "isn't",
+    'isnt',
+    "ain't",
+    'aint',
+    "wasn't",
+    'wasnt',
+    'not really',
+    'not that',
+    'not very',
+    'not fully',
+    'kinda bad',
+    'actually not',
+    'but not',
+    'but actually not',
+    'never really'
+  ]
+
+  // quick presence check: if there's no positive token or no negative token at all,
+  // we can bail early
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const hasPositive = positives.some(p => new RegExp(`\\b${esc(p)}\\b`, 'i').test(lower))
+  const hasNegativeAnywhere = negativePatterns.some(p => new RegExp(`\\b${esc(p)}\\b`, 'i').test(lower))
+  if (!hasPositive || !hasNegativeAnywhere) return false
+
+  // tokenise (keep apostrophes attached to contractions) and check windows around each positive
+  // normalize punctuation and fancy apostrophes first
+  const normalized = lower.replace(/[’‘`\u2018\u2019]/g, "'")
+  const tokens = normalized.replace(/[^\w' ]+/g, ' ').split(/\s+/).filter(Boolean)
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]
+    if (positives.includes(t)) {
+      // check nearby window (4 tokens before, 4 tokens after)
+      const start = Math.max(0, i - 4)
+      const end = Math.min(tokens.length, i + 5)
+      const window = tokens.slice(start, end).join(' ')
+      for (const pat of negativePatterns) {
+        try {
+          if (new RegExp(`\\b${esc(pat)}\\b`, 'i').test(window)) return true
+        } catch (e) {
+          // on regex issues, fall back to substring
+          if (window.includes(pat)) return true
+        }
+      }
+    }
+  }
+
+  // Conservative fallback: if both a positive token AND any negative marker appear
+  // anywhere in the message (but weren't caught by the local window checks above),
+  // treat it as negative. This makes the rule more robust for varied phrasings
+  // like "I'm good but not really" or "It's okay, actually not" where the
+  // negative modifier may be separated by punctuation or atypical tokenization.
+  if (hasPositive && hasNegativeAnywhere) return true
+
+  return false
+}
+
 export const ANGER_MAP: Array<{triggers: string[], reply: string}> = [
   { triggers: ["i'm angry", 'i am angry', 'im angry', 'angry'], reply: "Your feelings are valid — hey… I hear you. What made you this upset?" },
   { triggers: ["i'm irritated", 'i am irritated', 'im irritated', 'irritated'], reply: "Ugh, that sucks. Tell me what happened." },
@@ -187,6 +264,86 @@ export const detectEmotionResponse = (userMessage: string, opts: {
   }
   // small helper to escape regex tokens
   const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  // ------------------ Compliment Mode (IMPORTANT) ------------------
+  // If the user compliments the assistant, reply with warm gratitude and do NOT ask check-in
+  // questions or switch to greeting/emotional flows. This must run before greeting/emotion detection.
+  const complimentTriggers = [
+    'you are very clever', "you're very clever", "you're clever", 'you are clever',
+    "you're smart", 'youre smart', 'you are smart', "you're sweet", 'youre sweet', 'you are sweet',
+    "you're so nice", 'youre so nice', 'you are so nice', "you're cute", 'youre cute', 'you are cute',
+    "you're amazing", 'youre amazing', 'you are amazing', 'you helped me a lot', 'you helped me',
+    "you're the best", 'youre the best', 'you are the best', "you're funny", 'youre funny', 'you are funny',
+    "you're kind", 'youre kind', 'you are kind', "i like talking to you", 'i love your replies', 'you\'re comforting', 'youre comforting', 'you are comforting', 'you understand me'
+  ]
+  const complimentRegex = new RegExp(complimentTriggers.map(escapeRegex).join('|'), 'i')
+  // fallback simple heuristic: 'you' plus a compliment word
+  const complimentWords = ['clever', 'smart', 'sweet', 'nice', 'cute', 'amazing', 'helped', 'best', 'funny', 'kind', 'comforting', 'love your', 'i like talking to you', 'understand me']
+  const simpleComplimentMatch = complimentWords.some(k => lower.includes(k) && /\byou\b|\byour\b|\bi\b/.test(lower))
+  if (complimentRegex.test(userMessage) || simpleComplimentMatch) {
+    const complimentReplies = [
+      'Aww thank you, that means a lot 😄',
+      "You’re sweet for saying that!",
+      'Haha really, I appreciate you!',
+      'Thank you — I’m glad I could help.',
+      'That made me smile 😌',
+      'I’m happy you feel that way.'
+    ]
+    // pick deterministic-ish reply based on message length
+    return complimentReplies[Math.abs(userMessage.length) % complimentReplies.length]
+  }
+
+  // ------------------ Financial Stress Mode (CRITICAL FIX) ------------------
+  // If the user mentions any financial-related keywords anywhere in the sentence,
+  // ALWAYS trigger Financial Stress Mode and respond gently & grounding.
+  // This check must run early so 'financial' is never ignored.
+  const financialKeywords = [
+    'financial', 'finance', 'financial problem', 'financial issue',
+    'money problem', 'money issue', 'money stress', 'money pressure',
+    'no money', 'broke', 'expenses', 'bills', 'rent', 'salary issue',
+    'income issue', "can't afford", 'cant afford', 'debt', 'family financial problem',
+    'parents struggling financially', 'money is tight', 'financial stress',
+    // common natural-language variants we must catch
+    "don't have money", 'dont have money', "don't have any money", 'dont have any money',
+    'no money to invest', 'no money to invest right now', "i don't have money", 'i dont have money'
+  ]
+  try {
+    // build boundary-aware patterns for each keyword to avoid substring false-positives
+    const finPatterns = financialKeywords.map(k => `\\b${escapeRegex(k)}\\b`)
+    const finPattern = new RegExp(finPatterns.join('|'), 'i')
+    if (finPattern.test(userMessage)) {
+      const finReplies = [
+        'Financial pressure can feel really heavy — I’m here with you. What’s going on?',
+        'Money stress hits hard emotionally. Tell me what part feels the heaviest.',
+        'That sounds tough… want to talk through your financial worry step by step?'
+      ]
+      return finReplies[Math.abs(userMessage.length) % finReplies.length]
+    }
+  } catch (e) {
+    // fallback: test each keyword with a boundary-aware regex; if that fails, use includes
+    for (const k of financialKeywords) {
+      try {
+        const p = new RegExp(`\\b${escapeRegex(k)}\\b`, 'i')
+        if (p.test(userMessage)) {
+          const finReplies = [
+            'Financial pressure can feel really heavy — I’m here with you. What’s going on?',
+            'Money stress hits hard emotionally. Tell me what part feels the heaviest.',
+            'That sounds tough… want to talk through your financial worry step by step?'
+          ]
+          return finReplies[Math.abs(userMessage.length) % finReplies.length]
+        }
+      } catch (ee) {
+        if (lower.includes(k)) {
+          const finReplies = [
+            'Financial pressure can feel really heavy — I’m here with you. What’s going on?',
+            'Money stress hits hard emotionally. Tell me what part feels the heaviest.',
+            'That sounds tough… want to talk through your financial worry step by step?'
+          ]
+          return finReplies[Math.abs(userMessage.length) % finReplies.length]
+        }
+      }
+    }
+  }
 
   // --- MULTI-EMOTION DETECTION (new) ---
   // helper to detect all matching high-level labels in a message (returns array)
@@ -536,6 +693,34 @@ export const detectEmotionResponse = (userMessage: string, opts: {
   const howAreYouPatterns = ['how are you', 'how are you doing', 'how do you feel', 'what about you']
   const containsAny = (list: string[]) => list.some(t => lower.includes(t))
 
+  // NEGATIVE OVERRIDE MODE
+  // If any strongly-negative keyword is present, always treat as negative and never reply with cheerful/positive lines.
+  const negativeOverrideKeywords = [
+    'no', 'worst', 'bad', 'terrible', 'awful', 'sad', 'hurt', 'broken', 'low', 'down', 'mess', 'pain', 'exhausted', "can't handle", 'cant handle'
+  ]
+  // use word-boundary regexes so short tokens like 'not' or 'no' don't falsely match inside words
+  const hasNegativeOverride = negativeOverrideKeywords.some(k => {
+    try {
+      const pattern = new RegExp(`\\b${escapeRegex(k)}\\b`, 'i')
+      return pattern.test(lower)
+    } catch (e) {
+      return lower.includes(k)
+    }
+  })
+  // If the user is explicitly asking for techniques/help, don't force-negative-override
+  const asksForHelpQuick = /\bgive me\b|\bhelp me\b|\btechnique(s)?\b|\bcalm down\b|\bhelp\b/.test(lower)
+  const effectiveNegativeOverride = hasNegativeOverride && !asksForHelpQuick
+  if (hasNegativeOverride) {
+    // Supportive negative replies (calm, validating)
+    const negReplies = [
+      "I’m really sorry today felt this heavy. Want to tell me what happened?",
+      "That sounds rough… what made your day feel like the worst?",
+      "I’m here — talk to me. What went wrong today?",
+      "Bad days happen, but you don’t have to hold it alone. Tell me."
+    ]
+    if (effectiveNegativeOverride) return negReplies[Math.abs(userMessage.length) % negReplies.length]
+  }
+
   // Quick reply for simple conversational checks
   if (containsAny(howAreYouPatterns)) {
     return "I’m good! How about you?"
@@ -569,9 +754,22 @@ export const detectEmotionResponse = (userMessage: string, opts: {
     if (containsAny(negativeTokens)) {
       const replies = [
         'I’m really sorry you’re having a rough day… I’m here for you.',
-        'That sounds tough. I’m here to listen — want to tell me more?'
+        'That sounds tough. I’m here to listen — would you like to share more?'
       ]
       return replies[Math.floor(Math.random() * replies.length)]
+    }
+
+    // Advanced Negative Override: if a positive word appears but it's near a negative
+    // modifier (e.g., "not good", "okay but not good", "it's fine, but actually not"),
+    // treat the message as negative.
+    if (hasNearbyNegativeModifier(userMessage)) {
+      const negReplies = [
+        "Sounds like today wasn't the best — what made it 'not great'?",
+        'I hear you — it wasn\'t a good day. What happened?',
+        "It's okay to have days that aren't great. What happened?",
+        "So it\'s not great… what part felt off today?"
+      ]
+      return negReplies[Math.abs(userMessage.length) % negReplies.length]
     }
 
     if (containsAny(positiveTokens)) {
@@ -589,6 +787,14 @@ export const detectEmotionResponse = (userMessage: string, opts: {
   const loneliness = ['lonely','alone','nobody cares','nobody understands me','nobody is there','nobody is there for me','i feel left out','wish i had someone','isolated','empty inside','unseen','i feel disconnected']
   const sadness = ['i feel down','sad','low','empty','not okay','not feeling good','tired emotionally','hurt','drained','heavy','broken','low energy','want to cry','feeling numb']
 
+  // Deep Real-Talk triggers: intense, raw, unfiltered language that needs a grounded, real response
+  const deepRealTalk = [
+    'i cried', 'cried', 'my mind is fucked', 'mind is fucked', 'everything is hurting', 'i feel guilty', 'guilt',
+    'family abused me', 'abused by family', 'family pressure', 'my chest is heavy', 'chest is heavy', 'i messed up', 'i messed up so bad',
+    'backlash', 'i\'m insecure', 'i am insecure', 'i feel useless', "i don't have himmat", 'dont have himmat', "i'm not ready", 'not ready',
+    'i\'m scared', 'i am scared', 'nobody understands me', 'nobody understands', 'betrayed', 'they betrayed me', 'betrayal', 'i cried all night'
+  ]
+
   const stress = ['stressed','stress','pressure','too much work','too much to handle','overloaded','my mind is tight','i can\'t handle','so much going on','tension','panic building','i\'m overwhelmed','overwhelmed','everything is too much','so overwhelmed']
   const anxiety = ['anxious','anxiety','worried','scared','my chest feels heavy','nervous','overthinking the worst','spiraling','heart racing','i feel unsafe','fearful','on edge','paranoid feelings','panic']
   // avoid overly-short tokens like 'mad' which false-match words like 'made'
@@ -604,18 +810,7 @@ export const detectEmotionResponse = (userMessage: string, opts: {
   ]
 
   // Financial / money related stress — check early so it wins over broader categories like stress/confusion/fun
-  const financialHelpers = [
-    'money problem','broke','financial issue','money stress','debt','no money','salary issue','struggling financially',
-    'worried about money',"can't afford","cant afford","financial pressure","expenses too much","not enough money",
-    "i'm scared about money",'im scared about money','lost my job','jobless',"can't pay","cant pay","rent stress"," rent "
-  ]
-
-  // Financial label should be detected by label helper as well; keep list near other keyword groups
-  const financialLabelTriggers = [
-    'money problem','broke','financial issue','money stress','debt','no money','salary issue','struggling financially',
-    'worried about money',"can't afford",'cant afford','financial pressure','expenses too much','not enough money',
-    "i'm scared about money",'im scared about money','lost my job','jobless',"can't pay",'cant pay','rent stress',' rent '
-  ]
+  // (financial keyword lists are used later via `financialTriggers`/`financialHelpers` in label helper)
 
   // Fun / Friend Mode triggers (keywords, emoji, storytelling cues, tone markers)
   const funKeywords = [
@@ -658,6 +853,31 @@ export const detectEmotionResponse = (userMessage: string, opts: {
     const reflect = "Anyone would feel this way in your shoes; it's understandable."
     const invite = "What made you feel alone today? If you'd like, share one small memory and we can reflect on it together."
     return `${validation} ${reflect} ${invite}`
+  }
+
+  // DEEP REAL-TALK MODE — grounded, honest, calm, strong (not soft/clinical)
+  if (matchAny(deepRealTalk)) {
+    // betrayal-specific phrasing
+    if (lower.includes('betray') || lower.includes('they betrayed') || lower.includes('betrayal')) {
+      const b1 = "It hurts — betrayal cuts deep. Now you’ve seen their real face; that clarity is painful but useful."
+      const b2 = "Your heart was given trust and it was broken. That pain is valid, and it doesn't make you weak."
+      const b3 = "You didn’t deserve disloyalty. Let’s talk about what safety looks like for you moving forward."
+      return `${b1} ${b2} ${b3}`
+    }
+
+    // 'make my heart hard' style requests handled as strength-coaching
+    if (lower.includes('make my heart hard') || lower.includes('make my heart colder') || lower.includes('make my heart hard')) {
+      const s1 = "You don’t need a hard heart — you need a steady one. Strength isn’t becoming cold."
+      const s2 = "I’ll help you build emotional resilience, not walls. Let’s find steady practices that protect you without turning you off."
+      const s3 = "Tell me where you want to start — boundaries, routines, or small trust tests?"
+      return `${s1} ${s2} ${s3}`
+    }
+
+    // General deep-talk replies
+    const t1 = "You went through a lot, and it makes sense your chest feels heavy. Anyone in your place would feel the same."
+    const t2 = "This situation broke you down, but it doesn’t define you. You’re allowed to take time. You’re not a machine."
+    const t3 = "You’re carrying guilt that isn’t fully yours. Let’s slow down — tell me which part is hurting you the most right now."
+    return `${t1} ${t2} ${t3}`
   }
   // ------------------ Financial Stress Mode ------------------
   // Detect and respond specifically to money / debt / income problems.
@@ -893,6 +1113,14 @@ export const detectEmotionLabel = (userMessage: string): string | null => {
 
   const matchAny = (list: string[]) => list.some(t => lower.includes(t))
 
+  // Advanced Negative Override for label detection: if positive appears near negative
+  // modifier, treat as negative/sad for analytics.
+  try {
+    if (hasNearbyNegativeModifier(userMessage)) return 'sad'
+  } catch (e) {
+    // ignore helper errors and continue
+  }
+
   if (matchAny(hopelessness)) return 'hopeless'
   if (matchAny(loneliness)) return 'lonely'
   // Fun label detection
@@ -953,7 +1181,11 @@ export const detectEmotionLabel = (userMessage: string): string | null => {
   const financialHelpers = [
     'money problem','broke','financial issue','money stress','debt','no money','salary issue','struggling financially',
     'worried about money',"can't afford",'cant afford','financial pressure','expenses too much','not enough money',
-    "i'm scared about money","im scared about money","can't pay","can't pay rent",'cant pay','cant pay rent','rent stress'
+    "i'm scared about money","im scared about money","can't pay","can't pay rent" ,'cant pay','cant pay rent','rent stress',
+    // additional critical keywords per recent spec
+    'financial','finance','financial problem','financial issue','money issue','money pressure','income issue','family financial problem','parents struggling financially','money is tight','financial stress',
+    // plain/common tokens that should match simple sentences
+    'expenses','bills',"don't have money","dont have money","don't have any money","dont have any money"
   ]
   // If there are explicit income markers, prefer financial label
   if (matchAny(incomeHelpers)) return 'financial'
@@ -989,6 +1221,14 @@ export const detectEmotionLabels = (userMessage: string): string[] => {
   const labels: string[] = []
   const matchAny = (list: string[]) => list.some(t => lower.includes(t))
 
+  // If advanced negative override applies, return only 'sad' so multi-label
+  // detection does not include positive labels in these cases.
+  try {
+    if (hasNearbyNegativeModifier(userMessage)) return ['sad']
+  } catch (e) {
+    // continue on errors
+  }
+
   const hopelessness = ['hopeless','nothing matters','i can\'t do this anymore','pointless','i want to give up','life feels empty','no reason','lost everything','dark thoughts','i\'m done']
   const loneliness = ['lonely','alone','nobody cares','nobody understands me','nobody is there','i feel left out','isolated','empty inside']
   const sadness = ['i feel down','sad','low','empty','not okay','not feeling good','tired emotionally','hurt']
@@ -1000,6 +1240,8 @@ export const detectEmotionLabels = (userMessage: string): string[] => {
   const happiness = ['happy','excited','proud of myself','good day','i feel amazing']
   const motivation = ['motivated','inspired','ready to work','i want to improve']
 
+  const financial = ['financial','finance','money','debt','broke','no money','expenses','bills','rent',"can't afford",'cant afford','money stress','financial stress']
+
   if (matchAny(hopelessness)) labels.push('hopeless')
   if (matchAny(loneliness)) labels.push('lonely')
   if (matchAny(sadness)) labels.push('sad')
@@ -1010,6 +1252,8 @@ export const detectEmotionLabels = (userMessage: string): string[] => {
   if (matchAny(overthinking)) labels.push('overthinking')
   if (matchAny(happiness)) labels.push('happy')
   if (matchAny(motivation)) labels.push('motivation')
+
+  if (matchAny(financial)) labels.push('financial')
 
   // interpersonal / specific labels (non-overlapping but useful to include)
   if (lower.includes('breakup') || lower.includes('heartbreak') || lower.includes('she left me') || lower.includes('he left me')) labels.push('breakup')
