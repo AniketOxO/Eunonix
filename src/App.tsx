@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
+
 import Welcome from '@/pages/Welcome'
 import LandingPage from '@/pages/LandingPage'
 import Login from '@/pages/Login'
@@ -25,7 +26,7 @@ import APIDocs from '@/pages/APIDocs'
 function App() {
 
   return (
-    <Router>
+    <>
       <CustomCursor />
       <AuthPrompt />
       <Routes>
@@ -132,7 +133,7 @@ function App() {
         />
   <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
-    </Router>
+    </>
   )
 }
 
