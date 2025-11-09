@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage</title>
+</head>
+<body>
+    <h1>Clearing localStorage...</h1>
+    <script>
+        localStorage.removeItem('eunonix-channels');
+        localStorage.removeItem('eunonix-reflections');
+        localStorage.removeItem('eunonix-quests');
+        localStorage.removeItem('eunonix-progress');
+        localStorage.removeItem('eunonix-community-version');
+        alert('Storage cleared! Click OK to go back.');
+        window.location.href = '/community';
+    </script>
+</body>
+</html>
