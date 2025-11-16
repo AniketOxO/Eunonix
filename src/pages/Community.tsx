@@ -1310,14 +1310,14 @@ const Community = () => {
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-sand-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <svg className="w-6 h-6 text-lilac-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               <h1 className="text-2xl font-light text-ink-800">Community</h1>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 mt-3 md:mt-0">
               <Button variant="ghost" onClick={() => navigate('/dashboard')}>
                 Dashboard
               </Button>
@@ -1334,7 +1334,7 @@ const Community = () => {
 
       {/* Tabs */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex gap-2 mb-8 bg-white/60 backdrop-blur-sm p-2 rounded-2xl border border-sand-200">
+        <div className="flex flex-wrap gap-2 mb-8 bg-white/60 backdrop-blur-sm p-2 rounded-2xl border border-sand-200">
           {COMMUNITY_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -1343,7 +1343,7 @@ const Community = () => {
                 setSelectedChannel(null)
                 setSelectedQuest(null)
               }}
-              className={`flex-1 py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 text-sm ${
+              className={`w-1/2 sm:flex-1 py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-sm ${
                 activeTab === tab.id
                   ? 'bg-white shadow-sm text-lilac-700 font-medium'
                   : 'text-ink-500 hover:text-ink-700'
@@ -1361,7 +1361,7 @@ const Community = () => {
           <div>
             {!selectedChannel ? (
               <>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                   <h2 className="text-xl font-light text-ink-800">Life Channels</h2>
                   <Button onClick={() => setShowCreateChannel(true)}>
                     + Create Channel
@@ -1397,7 +1397,7 @@ const Community = () => {
             ) : (
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-sand-200 overflow-hidden">
                 <div className="p-6 border-b border-sand-200 bg-gradient-to-r from-lilac-50 to-sand-50">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
                       <button
                         onClick={() => setSelectedChannel(null)}
@@ -1519,7 +1519,7 @@ const Community = () => {
         {/* Shared Reflections Tab */}
         {activeTab === 'reflections' && (
           <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
               <h2 className="text-xl font-light text-ink-800">Shared Reflections</h2>
               <Button onClick={() => setShowShareReflection(true)}>
                 + Share Reflection
@@ -1572,7 +1572,7 @@ const Community = () => {
           <div>
             {!selectedQuest ? (
               <>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                   <h2 className="text-xl font-light text-ink-800">Collective Quests</h2>
                   <Button onClick={() => setShowCreateQuest(true)}>
                     + Create Quest
@@ -1692,7 +1692,7 @@ const Community = () => {
         {/* Shared Progress Tab */}
         {activeTab === 'progress' && (
           <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
               <h2 className="text-xl font-light text-ink-800">Shared Progress</h2>
               <Button onClick={() => setShowShareProgress(true)}>
                 + Share Progress

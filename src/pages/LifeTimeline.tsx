@@ -526,11 +526,11 @@ export default function LifeTimeline() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand-50 via-lilac-50 to-golden-50">
+    <div className="min-h-screen bg-gradient-to-br from-sand-50 via-lilac-50 to-golden-50 overflow-x-hidden">
       {/* Header */}
       <div className="border-b border-ink-100/10 bg-white/40 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Button variant="ghost" onClick={() => navigate('/dashboard')}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -542,7 +542,7 @@ export default function LifeTimeline() {
                 <p className="text-sm text-ink-600">Your life as an unfolding story</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
               <Button
                 variant={activeView === 'timeline' ? 'primary' : 'ghost'}
                 onClick={() => setActiveView('timeline')}
@@ -583,8 +583,8 @@ export default function LifeTimeline() {
               exit={{ opacity: 0, y: -20 }}
             >
               {/* Filters */}
-              <div className="flex items-center gap-4 mb-8">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-ink-600">Filter:</span>
                   <Button
                     size="sm"
@@ -604,25 +604,30 @@ export default function LifeTimeline() {
                     </Button>
                   ))}
                 </div>
-                <div className="ml-auto flex items-center gap-2">
+                <div className="md:ml-auto flex items-center gap-2 w-full md:w-auto">
+                  <div className="flex items-center gap-2 overflow-x-auto md:overflow-visible whitespace-nowrap">
                   <span className="text-sm text-ink-600">Range:</span>
                   {(['all', '3m', '6m', '1y'] as const).map(range => (
-                    <Button
-                      key={range}
-                      size="sm"
-                      variant={timeRange === range ? 'primary' : 'ghost'}
-                      onClick={() => setTimeRange(range)}
-                    >
-                      {range === 'all' ? 'All Time' : range.toUpperCase()}
-                    </Button>
+                    <div className="inline-block mr-2" key={range}>
+                      <Button
+                        size="sm"
+                        variant={timeRange === range ? 'primary' : 'ghost'}
+                        onClick={() => setTimeRange(range)}
+                      >
+                        {range === 'all' ? 'All Time' : range.toUpperCase()}
+                      </Button>
+                    </div>
                   ))}
+                  </div>
                 </div>
               </div>
 
               {/* Timeline */}
               <div className="relative">
-                {/* Vertical line */}
-                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-lilac-200 via-sand-200 to-golden-200" />
+                {/* Small-screen decorative bar — keeps timeline visual but moves it down instead of hiding features */}
+                <div className="md:hidden h-px w-full my-4 bg-gradient-to-r from-lilac-200 via-sand-200 to-golden-200" />
+                {/* Vertical line - shown on md and up */}
+                <div className="hidden md:block absolute left-6 md:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-lilac-200 via-sand-200 to-golden-200" />
 
                 <div className="space-y-8">
                   {filteredEntries.map((entry, index) => (
@@ -631,15 +636,20 @@ export default function LifeTimeline() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="relative pl-20"
+                      className="relative pl-0 md:pl-20"
                     >
-                      {/* Dot */}
-                      <div className={`absolute left-6 top-3 w-5 h-5 rounded-full ${getEmotionColor(entry.emotion)} shadow-lg ring-4 ring-white`} />
+                      {/* Dot for larger screens (absolute on left) */}
+                      <div className={`hidden md:block absolute left-3 md:left-6 top-3 w-5 h-5 rounded-full ${getEmotionColor(entry.emotion)} shadow-lg ring-4 ring-white`} />
 
                       {/* Card */}
-                      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-ink-100/20 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-ink-100/20 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-3">
                           <div>
+                            {/* Mobile dot - show inside card header on small screens */}
+                            <div className="md:hidden mb-2">
+                              <span className={`inline-block w-3 h-3 rounded-full ${getEmotionColor(entry.emotion)} shadow-sm`} />
+                            </div>
+
                             <div className="text-xs text-ink-500 mb-1">
                               {formatDate(entry.date)}
                             </div>

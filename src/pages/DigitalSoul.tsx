@@ -301,8 +301,8 @@ const DigitalSoul = () => {
   return (
     <div className="min-h-screen emotion-bg">
       {/* Header */}
-      <header className="glass-card sticky top-0 z-40 px-8 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <header className="glass-card sticky top-0 z-40 px-4 sm:px-8 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <motion.div
             className="cursor-pointer flex items-center gap-2"
             onClick={() => navigate('/dashboard')}
@@ -314,7 +314,7 @@ const DigitalSoul = () => {
             <h1 className="text-2xl font-semibold text-ink-800">Digital Soul</h1>
           </motion.div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <Button variant="ghost" onClick={() => navigate('/mindmap')}>
               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
@@ -369,11 +369,11 @@ const DigitalSoul = () => {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-8">
+  {/* Tab Navigation */}
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-8">
           <button
             onClick={() => setActiveTab('soul')}
-            className={`px-6 py-3 rounded-2xl font-medium transition-all flex items-center gap-2 ${
+            className={`w-full text-center px-6 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === 'soul'
                 ? 'bg-gradient-to-br from-lilac-400 to-ink-500 text-white'
                 : 'bg-white/40 text-ink-700 hover:bg-white/60'
@@ -386,7 +386,7 @@ const DigitalSoul = () => {
           </button>
           <button
             onClick={() => setActiveTab('backup')}
-            className={`px-6 py-3 rounded-2xl font-medium transition-all flex items-center gap-2 ${
+            className={`w-full text-center px-6 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === 'backup'
                 ? 'bg-gradient-to-br from-lilac-400 to-ink-500 text-white'
                 : 'bg-white/40 text-ink-700 hover:bg-white/60'
@@ -399,7 +399,7 @@ const DigitalSoul = () => {
           </button>
           <button
             onClick={() => setActiveTab('sync')}
-            className={`px-6 py-3 rounded-2xl font-medium transition-all flex items-center gap-2 ${
+            className={`w-full text-center px-6 py-3 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === 'sync'
                 ? 'bg-gradient-to-br from-lilac-400 to-ink-500 text-white'
                 : 'bg-white/40 text-ink-700 hover:bg-white/60'
@@ -725,7 +725,7 @@ const DigitalSoul = () => {
             {/* What's Included */}
             <div className="glass-card p-6 rounded-3xl">
               <h3 className="text-lg font-semibold text-ink-800 mb-4">What's Included in Your Backup</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 p-3 bg-sand-50/50 rounded-xl">
                   <svg className="w-5 h-5 text-lilac-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />

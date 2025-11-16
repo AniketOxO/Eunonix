@@ -55,7 +55,17 @@ const LandingPage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <a href="#features" className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">
+            <a
+              href="#features"
+              className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base"
+              onClick={(e) => {
+                e.preventDefault()
+                const el = document.getElementById('features')
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+              }}
+            >
               Features
             </a>
             <Link to="/pricing" className="hidden sm:inline text-ink-600 hover:text-ink-800 transition-colors text-sm sm:text-base">

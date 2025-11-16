@@ -593,14 +593,14 @@ const MindArchitect = () => {
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-sand-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <svg className="w-6 h-6 text-lilac-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
               <h1 className="text-2xl font-light text-ink-800">AI Mind Architect</h1>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 mt-3 md:mt-0">
               <Button variant="ghost" onClick={() => navigate('/dashboard')}>
                 Dashboard
               </Button>
@@ -640,12 +640,12 @@ const MindArchitect = () => {
         ) : (
           <>
             {/* Tabs */}
-            <div className="flex gap-2 mb-8 bg-white/60 backdrop-blur-sm p-2 rounded-2xl border border-sand-200">
+            <div className="flex flex-wrap gap-2 mb-8 bg-white/60 backdrop-blur-sm p-2 rounded-2xl border border-sand-200">
               {TAB_CONFIG.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 text-sm ${
+                  className={`w-1/2 sm:flex-1 py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-sm ${
                     activeTab === tab.id
                       ? 'bg-white shadow-sm text-lilac-700 font-medium'
                       : 'text-ink-500 hover:text-ink-700'
@@ -661,7 +661,7 @@ const MindArchitect = () => {
             {/* Blueprint Tab */}
             {activeTab === 'blueprint' && (
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-sand-200 p-8">
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                   <div>
                     <h2 className="text-2xl font-light text-ink-800 mb-2">{currentBlueprint.name}</h2>
                     <p className="text-sm text-ink-500">Created {new Date(currentBlueprint.createdAt).toLocaleDateString()}</p>
@@ -702,7 +702,7 @@ const MindArchitect = () => {
             {/* System Files Tab */}
             {activeTab === 'system' && (
               <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                   <h2 className="text-xl font-light text-ink-800">System Files</h2>
                   <Button variant="ghost" onClick={analyzeCurrentSystem}>
                     <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -781,7 +781,7 @@ const MindArchitect = () => {
             {/* Upgrades Tab */}
             {activeTab === 'upgrades' && (
               <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                   <h2 className="text-xl font-light text-ink-800">Active Upgrades</h2>
                   <Button onClick={() => setShowUpgradeModal(true)}>
                     + Create Custom Upgrade

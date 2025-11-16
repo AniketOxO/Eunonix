@@ -43,6 +43,7 @@ const Dashboard = () => {
   
   const [activeSection, setActiveSection] = useState<'overview' | 'goals' | 'habits' | 'plan'>('overview')
   const [highlightedPlugin, setHighlightedPlugin] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pluginSectionRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
   const installedPlugins = user?.installedPlugins ?? []
@@ -159,7 +160,7 @@ const Dashboard = () => {
               <h1 className="text-xl sm:text-2xl font-semibold text-ink-800">Eunonix</h1>
             </motion.div>
 
-            <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+            <div className="hidden md:flex items-center gap-4 xl:gap-6">
               <Button variant="ghost" onClick={() => handleNavigation('/timeline', 'Timeline')}>
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -215,9 +216,50 @@ const Dashboard = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="lg:hidden flex items-center gap-3">
+            <div className="md:hidden flex items-center gap-3">
+              <button
+                aria-label="Open menu"
+                className="p-2 rounded-lg hover:bg-white/30"
+                onClick={() => setMobileMenuOpen((s) => !s)}
+              >
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <ProfileDropdown />
             </div>
+
+            {/* Mobile menu overlay */}
+            {mobileMenuOpen && (
+              <div className="absolute left-4 right-4 top-full mt-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg z-50 p-3 md:hidden">
+                <div className="flex flex-col gap-2">
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/timeline', 'Timeline') }}>
+                    <span className="mr-2">Timeline</span>
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/mind-architect', 'Mind Architect') }}>
+                    Architect
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/community', 'Community') }}>
+                    Community
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/digital-soul', 'Digital Soul') }}>
+                    Soul
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/mind-map', 'Mind Map') }}>
+                    MindMap
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/journal', 'Journal') }}>
+                    Journal
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/ai-companion', 'AI Companion') }}>
+                    Companion
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); handleNavigation('/sensory-expansion', 'Sensory Expansion') }}>
+                    Sensory
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
