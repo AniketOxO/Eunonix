@@ -1412,10 +1412,8 @@ const SensoryExpansion = () => {
                     }
                   })
                 }
-                // Play binaural beats for focus
-                if (!isPlaying) {
-                  playAudio('binaural', 40)
-                }
+                // Play binaural beats for focus (disabled on click to avoid unexpected audio)
+                // audio is managed from the Soundscape controls — do not auto-play here
                 // Trigger focus haptic pattern
                 if (deviceSupport.haptics) {
                   triggerHaptic('focus', 50)
